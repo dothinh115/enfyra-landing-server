@@ -1,0 +1,114 @@
+import 'reflect-metadata';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as dotenv from 'dotenv';
+import { Knex, knex } from 'knex';
+import {
+  KnexTableSchema,
+} from '../src/shared/types/database-init.types';
+import {
+  parseSnapshotToSchema,
+} from './utils/sql/schema-parser';
+import { ensureDatabaseExists } from './utils/sql/database-setup';
+import {
+  createTable,
+  createAllTables,
+} from './utils/sql/table-builder';
+import { addForeignKeys } from './utils/sql/foreign-keys';
+import {
+  createJunctionTables,
+  syncJunctionTables,
+} from './utils/sql/junction-tables';
+import { syncTable } from './utils/sql/migrations';
+
+dotenv.config();
+
+
+
+
+
+
+
+export async function initializeDatabaseSql(): Promise<void> {
+  const DB_TYPE = process.env.DB_TYPE || 'mysql';
+  const DB_HOST = process.env.DB_HOST || 'localhost';
+  const DB_PORT =
+    Number(process.env.DB_PORT) || (DB_TYPE === 'postgres' ? 5432 : 3306);
+  const DB_USERNAME = process.env.DB_USERNAME || 'root';
+  const DB_PASSWORD = process.env.DB_PASSWORD || '';
+  const DB_NAME = process.env.DB_NAME || 'enfyra';
+
+  await ensureDatabaseExists();
+
+  const knexInstance = knex({
+    client: DB_TYPE === 'postgres' ? 'pg' : 'mysql2',
+    connection: {
+      host: DB_HOST,
+      port: DB_PORT,
+      user: DB_USERNAME,
+      password: DB_PASSWORD,
+      database: DB_NAME,
+    },
+  });
+
+  try {
+    const hasSettingTable = await knexInstance.schema.hasTable(
+      'setting_definition',
+    );
+
+    if (hasSettingTable) {
+      const result = await knexInstance('setting_definition')
+        .select('isInit')
+        .first();
+
+      if (result?.isInit === true || result?.isInit === 1) {
+        console.log('⚠️ Database already initialized, skipping init.');
+        return;
+      }
+    }
+
+    const snapshotPath = path.resolve(process.cwd(), 'data/snapshot.json');
+    const snapshot = JSON.parse(fs.readFileSync(snapshotPath, 'utf8'));
+
+    console.log('📖 Loaded snapshot.json');
+
+    const schemas = parseSnapshotToSchema(snapshot);
+
+    console.log(`📊 Found ${schemas.length} tables to create`);
+
+    console.log('🚀 Creating/syncing all tables...');
+
+    await createAllTables(knexInstance, schemas, DB_TYPE);
+
+    console.log('\n🔄 Syncing tables with snapshot...');
+    for (const schema of schemas) {
+      const exists = await knexInstance.schema.hasTable(schema.tableName);
+      if (exists) {
+        await syncTable(knexInstance, schema, schemas);
+      }
+    }
+
+    await syncJunctionTables(knexInstance, schemas, DB_TYPE);
+
+    console.log('\n🎉 Database initialization/sync completed!');
+  } catch (error) {
+    console.error('❌ Error during database initialization:', error);
+    throw error;
+  } finally {
+    await knexInstance.destroy();
+  }
+}
+
+if (require.main === module) {
+  initializeDatabaseSql()
+    .then(() => {
+      console.log('✅ Done!');
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error('❌ Failed:', error);
+      process.exit(1);
+    });
+}
+
+
