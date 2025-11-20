@@ -3,7 +3,8 @@ module.exports = {
     {
       name: 'landing-server',
       script: './dist/src/main.js',
-      exec_mode: 'fork',
+      instances: 4,
+      exec_mode: 'cluster',
       env: {
         NODE_ENV: 'production',
       },
