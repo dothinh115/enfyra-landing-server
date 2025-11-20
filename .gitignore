@@ -73,3 +73,6 @@ AI_MEMORY_BE_old.md
 
 # Claude configuration
 .clauderc
+
+# Server configuration (contains sensitive info)
+server-config.md
