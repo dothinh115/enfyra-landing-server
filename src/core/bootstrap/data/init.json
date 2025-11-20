@@ -1,848 +1,697 @@
 {
-  "role_definition": {
-    "name": "Admin"
-  },
-  "user_definition": {
-    "email": "admin@enfyra.io",
-    "password": "enfyraadmin",
-    "isRootAdmin": true,
-    "isSystem": true
-  },
-  "setting_definition": {
-    "isInit": false,
-    "isSystem": true,
-    "projectName": "Enfyra CMS",
-    "projectDescription": "Description for Enfyra CMS"
-  },
-  "method_definition": [
-    {
-      "method": "GQL_QUERY",
-      "isSystem": true
+    "role_definition": {
+        "name": "Admin"
     },
-    {
-      "method": "GQL_MUTATION",
-      "isSystem": true
+    "user_definition": {
+        "email": "enfyra@admin.com",
+        "password": "1234",
+        "isRootAdmin": true,
+        "isSystem":true
     },
-    {
-      "method": "GET",
-      "isSystem": true
+    "setting_definition": {
+        "isInit": false,
+        "isSystem":true,
+        "projectName": "Enfyra CMS",
+        "projectDescription": "Description for Enfyra CMS"
     },
-    {
-      "method": "POST",
-      "isSystem": true
-    },
-    {
-      "method": "PATCH",
-      "isSystem": true
-    },
-    {
-      "method": "DELETE",
-      "isSystem": true
-    }
-  ],
-  "route_definition": [
-    {
-      "path": "/route_definition",
-      "mainTable": "route_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:git-branch",
-      "publishedMethods": [
-        "GET"
-      ]
-    },
-    {
-      "path": "/table_definition",
-      "mainTable": "table_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:table",
-      "publishedMethods": [
-        "GET"
-      ]
-    },
-    {
-      "path": "/user_definition",
-      "mainTable": "user_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:user"
-    },
-    {
-      "path": "/setting_definition",
-      "mainTable": "setting_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:settings",
-      "publishedMethods": [
-        "GET"
-      ]
-    },
-    {
-      "path": "/ai_config_definition",
-      "mainTable": "ai_config_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:sparkles"
-    },
-    {
-      "path": "/role_definition",
-      "mainTable": "role_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:shield-check"
-    },
-    {
-      "path": "/auth/login",
-      "mainTable": "user_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:route"
-    },
-    {
-      "path": "/auth/logout",
-      "mainTable": "user_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:route"
-    },
-    {
-      "path": "/auth/refresh-token",
-      "mainTable": "user_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:route"
-    },
-    {
-      "path": "/me",
-      "mainTable": "user_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:route"
-    },
-    {
-      "path": "/method_definition",
-      "mainTable": "method_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:route"
-    },
-    {
-      "path": "/hook_definition",
-      "mainTable": "hook_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:route"
-    },
-    {
-      "path": "/route_handler_definition",
-      "mainTable": "route_handler_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:route"
-    },
-    {
-      "path": "/route_permission_definition",
-      "mainTable": "route_permission_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:route"
-    },
-    {
-      "path": "/menu_definition",
-      "mainTable": "menu_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:menu",
-      "publishedMethods": [
-        "GET"
-      ]
-    },
-    {
-      "path": "/extension_definition",
-      "mainTable": "extension_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:puzzle",
-      "publishedMethods": [
-        "GET"
-      ]
-    },
-    {
-      "path": "/folder_definition",
-      "mainTable": "folder_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:folder"
-    },
-    {
-      "path": "/folder_definition/tree",
-      "mainTable": "folder_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:folder-tree"
-    },
-    {
-      "path": "/file_definition",
-      "mainTable": "file_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:file"
-    },
-    {
-      "path": "/file_permission_definition",
-      "mainTable": "file_permission_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:file"
-    },
-    {
-      "path": "/assets/:id",
-      "mainTable": "file_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:download",
-      "publishedMethods": [
-        "GET"
-      ]
-    },
-    {
-      "path": "/package_definition",
-      "mainTable": "package_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:package"
-    },
-    {
-      "path": "/bootstrap_script_definition",
-      "mainTable": "bootstrap_script_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:play"
-    },
-    {
-      "path": "/storage_config_definition",
-      "mainTable": "storage_config_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:hard-drive"
-    },
-    {
-      "path": "/admin/reload",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:refresh-cw",
-      "description": "Reload all caches and schemas"
-    },
-    {
-      "path": "/admin/reload/metadata",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:database",
-      "description": "Reload metadata cache"
-    },
-    {
-      "path": "/admin/reload/routes",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:route",
-      "description": "Reload routes cache"
-    },
-    {
-      "path": "/admin/reload/swagger",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:file-code",
-      "description": "Reload Swagger spec"
-    },
-    {
-      "path": "/admin/reload/graphql",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:code",
-      "description": "Reload GraphQL schema"
-    },
-    {
-      "path": "/admin/metadata-sync/:id",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:sync",
-      "description": "Sync metadata with physical database"
-    },
-    {
-      "path": "/api-docs",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:book-open",
-      "description": "Swagger API Documentation",
-      "publishedMethods": [
-        "GET"
-      ]
-    },
-    {
-      "path": "/ai-agent/chat",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:message-square",
-      "description": "AI Agent Chat (non-streaming)"
-    },
-    {
-      "path": "/ai-agent/chat/stream",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:zap",
-      "description": "AI Agent Chat (streaming)"
-    },
-    {
-      "path": "/ai-agent/cancel",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:square",
-      "description": "Cancel AI Agent streaming"
-    },
-    {
-      "path": "/ai_conversation_definition",
-      "mainTable": "ai_conversation_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:messages-square"
-    },
-    {
-      "path": "/ai_message_definition",
-      "mainTable": "ai_message_definition",
-      "isEnabled": true,
-      "isSystem": true,
-      "icon": "lucide:message-circle"
-    }
-  ],
-  "hook_definition": [
-    {
-      "isEnabled": true,
-      "afterHook": "@DATA = { statusCode: @STATUS, ...@DATA, message: 'Success'}",
-      "name": "Default response",
-      "isSystem": false
-    },
-    {
-      "isEnabled": true,
-      "preHook": "if (@BODY.password) { @BODY.password = await @HELPERS.$bcrypt.hash(@BODY.password); }",
-      "name": "User definition hash password",
-      "isSystem": true,
-      "route": "/user_definition",
-      "methods": [
-        "POST",
-        "PATCH"
-      ]
-    },
-    {
-      "isEnabled": true,
-      "preHook": "if (@BODY.name) { @BODY.slug = await @HELPERS.autoSlug(@BODY.name); }",
-      "name": "Folder definition auto slug",
-      "isSystem": true,
-      "route": "/folder_definition",
-      "methods": [
-        "POST",
-        "PATCH"
-      ]
-    }
-  ],
-  "storage_config_definition": [
-    {
-      "name": "Local",
-      "type": "Local Storage",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Default local file storage"
-    }
-  ],
-  "menu_definition": [
-    {
-      "type": "Dropdown Menu",
-      "label": "Dashboard",
-      "icon": "lucide:layout-dashboard",
-      "path": "/dashboard",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Main dashboard",
-      "order": 1,
-      "permission": {
-        "allowAll": true
-      }
-    },
-    {
-      "type": "Dropdown Menu",
-      "label": "Data",
-      "icon": "lucide:list",
-      "path": "/data",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Data management",
-      "order": 2,
-      "permission": {
-        "allowAll": true
-      }
-    },
-    {
-      "type": "Menu",
-      "label": "Collections",
-      "icon": "lucide:database",
-      "path": "/collections",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Table collections management",
-      "order": 3,
-      "permission": {
-        "or": [
-          {
-            "route": "/table_definition",
-            "actions": [
-              "create"
-            ]
-          },
-          {
-            "route": "/table_definition",
-            "actions": [
-              "update"
-            ]
-          },
-          {
-            "route": "/table_definition",
-            "actions": [
-              "delete"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Dropdown Menu",
-      "label": "Settings",
-      "icon": "lucide:settings",
-      "path": "/settings",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "System settings",
-      "order": 4,
-      "permission": {
-        "allowAll": true
-      }
-    },
-    {
-      "type": "Menu",
-      "label": "General",
-      "icon": "heroicons:cog-8-tooth",
-      "path": "/settings/general",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "General settings",
-      "order": 1,
-      "parent": "Settings",
-      "permission": {
-        "or": [
-          {
-            "route": "/setting_definition",
-            "actions": [
-              "read",
-              "update"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Menu",
-      "label": "Menu",
-      "icon": "heroicons:bars-3",
-      "path": "/settings/menus",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Menu management",
-      "order": 3,
-      "parent": "Settings",
-      "permission": {
-        "or": [
-          {
-            "route": "/menu_definition",
-            "actions": [
-              "read"
-            ]
-          },
-          {
-            "route": "/menu_definition",
-            "actions": [
-              "create"
-            ]
-          },
-          {
-            "route": "/menu_definition",
-            "actions": [
-              "update"
-            ]
-          },
-          {
-            "route": "/menu_definition",
-            "actions": [
-              "delete"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Menu",
-      "label": "Extensions",
-      "icon": "heroicons:puzzle-piece",
-      "path": "/settings/extensions",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Extension management",
-      "order": 4,
-      "parent": "Settings",
-      "permission": {
-        "and": [
-          {
-            "route": "/extension_definition",
-            "actions": [
-              "read"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Menu",
-      "label": "Routings",
-      "icon": "heroicons:map",
-      "path": "/settings/routings",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Route management",
-      "order": 5,
-      "parent": "Settings",
-      "permission": {
-        "and": [
-          {
-            "route": "/route_definition",
-            "actions": [
-              "read"
-            ]
-          },
-          {
-            "or": [
-              {
-                "route": "/route_definition",
-                "actions": [
-                  "create"
-                ]
-              },
-              {
-                "route": "/route_definition",
-                "actions": [
-                  "update"
-                ]
-              },
-              {
-                "route": "/route_definition",
-                "actions": [
-                  "delete"
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Menu",
-      "label": "Handlers",
-      "icon": "heroicons:command-line",
-      "path": "/settings/handlers",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Route handler management",
-      "order": 6,
-      "parent": "Settings",
-      "permission": {
-        "or": [
-          {
-            "route": "/route_handler_definition",
-            "actions": [
-              "read"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Menu",
-      "label": "Hooks",
-      "icon": "heroicons:link",
-      "path": "/settings/hooks",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Hook management",
-      "order": 7,
-      "parent": "Settings",
-      "permission": {
-        "or": [
-          {
-            "route": "/hook_definition",
-            "actions": [
-              "read"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Menu",
-      "label": "Bootstrap Scripts",
-      "icon": "heroicons:play",
-      "path": "/settings/bootstrap",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Bootstrap script management",
-      "order": 8,
-      "parent": "Settings",
-      "permission": {
-        "or": [
-          {
-            "route": "/bootstrap_script_definition",
-            "actions": [
-              "read"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Dropdown Menu",
-      "label": "AI",
-      "icon": "lucide:sparkles",
-      "path": "/ai",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "AI Agent and Configuration",
-      "order": 5,
-      "permission": {
-        "allowAll": true
-      }
-    },
-    {
-      "type": "Dropdown Menu",
-      "label": "Packages",
-      "icon": "lucide:package",
-      "path": "/packages",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Packages management",
-      "order": 8,
-      "permission": {
-        "or": [
-          {
-            "route": "/package_definition",
-            "actions": [
-              "read"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Menu",
-      "label": "Users",
-      "icon": "heroicons:users",
-      "path": "/settings/users",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "User management",
-      "order": 9,
-      "parent": "Settings",
-      "permission": {
-        "and": [
-          {
+    "method_definition": [
+        {
+            "method": "GQL_QUERY",
+            "isSystem":true
+        },
+        {
+            "method": "GQL_MUTATION",
+            "isSystem":true
+        },
+        {
+            "method": "GET",
+            "isSystem":true
+        },
+        {
+            "method": "POST",
+            "isSystem":true
+        },
+        {
+            "method": "PATCH",
+            "isSystem":true
+        },
+        {
+            "method": "DELETE",
+            "isSystem":true
+        }
+        
+    ],
+    "route_definition": [
+        {
+            "path": "/route_definition",
+            "mainTable": "route_definition",
+            "isEnabled": true,
+            "isSystem":true,
+            "icon": "lucide:git-branch",
+            "publishedMethods": ["GET"]
+        },
+        {
+            "path": "/table_definition",
+            "mainTable": "table_definition",
+            "isEnabled": true,
+            "isSystem":true,
+            "icon": "lucide:table",
+            "publishedMethods": ["GET"]
+        },
+        {
+            "path": "/user_definition",
+            "mainTable": "user_definition",
+            "isEnabled": true,
+            "isSystem":true,
+            "icon": "lucide:user"
+        },
+        {
+            "path": "/setting_definition",
+            "mainTable": "setting_definition",
+            "isEnabled": true,
+            "isSystem":true,
+            "icon": "lucide:settings",
+            "publishedMethods": ["GET"]
+        },
+        {
+            "path": "/ai_config_definition",
+            "mainTable": "ai_config_definition",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:sparkles"
+        },
+        {
+            "path": "/role_definition",
+            "mainTable": "role_definition",
+            "isEnabled": true,
+            "isSystem":true,
+            "icon":"lucide:shield-check"
+        },
+        {
+            "path": "/auth/login",
+            "mainTable": "user_definition",
+            "isEnabled": true,
+            "isSystem":true,
+            "icon":"lucide:route"
+        },
+         {
+            "path": "/auth/logout",
+            "mainTable": "user_definition",
+            "isEnabled": true,
+            "isSystem":true,
+            "icon":"lucide:route"
+        },
+         {
+            "path": "/auth/refresh-token",
+            "mainTable": "user_definition",
+            "isEnabled": true,
+            "isSystem":true,
+            "icon":"lucide:route"
+        },
+        {
+            "path": "/me",
+            "mainTable": "user_definition",
+            "isEnabled": true,
+            "isSystem":true,
+            "icon":"lucide:route"
+        },
+        {
+            "path": "/method_definition",
+            "mainTable": "method_definition",
+            "isEnabled": true,
+            "isSystem":true,
+            "icon":"lucide:route"
+        },
+        {
+            "path": "/hook_definition",
+            "mainTable": "hook_definition",
+            "isEnabled": true,
+            "isSystem":true,
+            "icon":"lucide:route"
+        },
+        {
+            "path": "/route_handler_definition",
+            "mainTable": "route_handler_definition",
+            "isEnabled": true,
+            "isSystem":true,
+            "icon":"lucide:route"
+        },
+        {
+            "path": "/route_permission_definition",
+            "mainTable": "route_permission_definition",
+            "isEnabled": true,
+            "isSystem":true,
+            "icon":"lucide:route"
+        },
+        {
+            "path": "/menu_definition",
+            "mainTable": "menu_definition",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:menu",
+            "publishedMethods": ["GET"]
+        },
+        {
+            "path": "/extension_definition",
+            "mainTable": "extension_definition",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:puzzle",
+            "publishedMethods": ["GET"]
+        },
+        {
+            "path": "/folder_definition",
+            "mainTable": "folder_definition",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:folder"
+        },
+        {
+            "path": "/folder_definition/tree",
+            "mainTable": "folder_definition",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:folder-tree"
+        },
+        {
+            "path": "/file_definition",
+            "mainTable": "file_definition",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:file"
+        },
+        {
+            "path": "/file_permission_definition",
+            "mainTable": "file_permission_definition",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:file"
+        },
+        {
+            "path": "/assets/:id",
+            "mainTable": "file_definition",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:download",
+            "publishedMethods": ["GET"]
+        },
+        {
+            "path": "/package_definition",
+            "mainTable": "package_definition",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:package"
+        },
+        {
+            "path": "/bootstrap_script_definition",
+            "mainTable": "bootstrap_script_definition",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:play"
+        },
+        {
+            "path": "/storage_config_definition",
+            "mainTable": "storage_config_definition",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:hard-drive"
+        },
+        {
+            "path": "/admin/reload",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:refresh-cw",
+            "description": "Reload all caches and schemas"
+        },
+        {
+            "path": "/admin/reload/metadata",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:database",
+            "description": "Reload metadata cache"
+        },
+        {
+            "path": "/admin/reload/routes",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:route",
+            "description": "Reload routes cache"
+        },
+        {
+            "path": "/admin/reload/swagger",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:file-code",
+            "description": "Reload Swagger spec"
+        },
+        {
+            "path": "/admin/reload/graphql",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:code",
+            "description": "Reload GraphQL schema"
+        },
+        {
+            "path": "/admin/metadata-sync/:id",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:sync",
+            "description": "Sync metadata with physical database"
+        },
+        {
+            "path": "/api-docs",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:book-open",
+            "description": "Swagger API Documentation",
+            "publishedMethods": ["GET"]
+        },
+        {
+            "path": "/ai-agent/chat",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:message-square",
+            "description": "AI Agent Chat (non-streaming)"
+        },
+        {
+            "path": "/ai-agent/chat/stream",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:zap",
+            "description": "AI Agent Chat (streaming)"
+        },
+        {
+            "path": "/ai-agent/cancel",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:square",
+            "description": "Cancel AI Agent streaming"
+        },
+        {
+            "path": "/ai_conversation_definition",
+            "mainTable": "ai_conversation_definition",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:messages-square"
+        },
+        {
+            "path": "/ai_message_definition",
+            "mainTable": "ai_message_definition",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:message-circle"
+        }
+    ], 
+    "hook_definition": [
+        {
+            "isEnabled": true,
+            "afterHook": "@DATA = { statusCode: @STATUS, ...@DATA, message: 'Success'}",
+            "name": "Default response",
+            "isSystem":false
+        },
+        {
+            "isEnabled": true,
+            "preHook": "if (@BODY.password) { @BODY.password = await @HELPERS.$bcrypt.hash(@BODY.password); }",
+            "name": "User definition hash password",
+            "isSystem":true,
             "route": "/user_definition",
-            "actions": [
-              "read"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Menu",
-      "label": "Roles",
-      "icon": "heroicons:shield-check",
-      "path": "/settings/roles",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Role management",
-      "order": 10,
-      "parent": "Settings",
-      "permission": {
-        "and": [
-          {
-            "route": "/role_definition",
-            "actions": [
-              "read"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Dropdown Menu",
-      "label": "Storage",
-      "icon": "heroicons:server",
-      "path": "/storage",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Storage management",
-      "order": 5,
-      "permission": {
-        "or": [
-          {
-            "route": "/file_definition",
-            "actions": [
-              "read"
-            ]
-          },
-          {
-            "route": "/storage/config",
-            "actions": [
-              "read"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Menu",
-      "label": "Storage Configurations",
-      "icon": "heroicons:cloud-arrow-up",
-      "path": "/storage/config",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Storage backend configurations",
-      "order": 2,
-      "parent": "Storage",
-      "permission": {
-        "or": [
-          {
-            "route": "/storage/config",
-            "actions": [
-              "read"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Menu",
-      "label": "Files Management",
-      "icon": "lucide:folder-tree",
-      "path": "/storage/management",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Files Management",
-      "order": 1,
-      "parent": "Storage",
-      "permission": {
-        "or": [
-          {
-            "route": "/file_definition",
-            "actions": [
-              "read"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Menu",
-      "label": "AI Chat",
-      "icon": "lucide:message-square",
-      "path": "/ai-agent/chat",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Chat with AI Agent",
-      "order": 1,
-      "parent": "AI",
-      "permission": {
-        "or": [
-          {
-            "route": "/ai-agent/chat",
-            "actions": [
-              "create"
-            ]
-          },
-          {
-            "route": "/ai_conversation_definition",
-            "actions": [
-              "read"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Menu",
-      "label": "AI Configuration",
-      "icon": "lucide:settings",
-      "path": "/ai-agent/config",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Configure AI Agent settings",
-      "order": 2,
-      "parent": "AI",
-      "permission": {
-        "or": [
-          {
-            "route": "/ai_config_definition",
-            "actions": [
-              "read"
-            ]
-          },
-          {
-            "route": "/ai_config_definition",
-            "actions": [
-              "update"
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "type": "Menu",
-      "label": "Install Package",
-      "icon": "lucide:plus",
-      "path": "/packages/install",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Install Package",
-      "order": 1,
-      "parent": "Packages"
-    },
-    {
-      "type": "Menu",
-      "label": "App Packages",
-      "icon": "lucide:package-2",
-      "path": "/packages/app",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "App packages management",
-      "order": 2,
-      "parent": "Packages"
-    },
-    {
-      "type": "Menu",
-      "label": "Backend Packages",
-      "icon": "lucide:box",
-      "path": "/packages/backend",
-      "isEnabled": true,
-      "isSystem": true,
-      "description": "Backend packages management",
-      "order": 3,
-      "parent": "Packages"
-    }
-  ]
+            "methods": ["POST", "PATCH"]
+        },
+        {
+            "isEnabled": true,
+            "preHook": "if (@BODY.name) { @BODY.slug = await @HELPERS.autoSlug(@BODY.name); }",
+            "name": "Folder definition auto slug",
+            "isSystem": true,
+            "route": "/folder_definition",
+            "methods": ["POST", "PATCH"]
+        }
+    ],
+    "storage_config_definition": [
+        {
+            "name": "Local",
+            "type": "Local Storage",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Default local file storage"
+        }
+    ],
+    "menu_definition": [
+        {
+            "type": "Dropdown Menu",
+            "label": "Dashboard",
+            "icon": "lucide:layout-dashboard",
+            "path": "/dashboard",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Main dashboard",
+            "order": 1,
+            "permission": {
+                "allowAll": true
+            }
+        },
+        {
+            "type": "Dropdown Menu",
+            "label": "Data",
+            "icon": "lucide:list",
+            "path": "/data",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Data management",
+            "order": 2,
+            "permission": {
+                "allowAll": true
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "Collections",
+            "icon": "lucide:database",
+            "path": "/collections",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Table collections management",
+            "order": 3,
+            "permission": {
+                "or": [
+                    {
+                        "route": "/table_definition",
+                        "actions": ["create"]
+                    },
+                    {
+                        "route": "/table_definition",
+                        "actions": ["update"]
+                    },
+                    {
+                        "route": "/table_definition",
+                        "actions": ["delete"]
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Dropdown Menu",
+            "label": "Settings",
+            "icon": "lucide:settings",
+            "path": "/settings",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "System settings",
+            "order": 4,
+            "permission": {
+                "allowAll": true
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "General",
+            "icon": "heroicons:cog-8-tooth",
+            "path": "/settings/general",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "General settings",
+            "order": 1,
+            "parent": "Settings",
+            "permission": {
+                "or": [{ "route": "/setting_definition", "actions": ["read", "update"] }]
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "Menu",
+            "icon": "heroicons:bars-3",
+            "path": "/settings/menus",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Menu management",
+            "order": 3,
+            "parent": "Settings",
+            "permission": {
+                "or": [
+                    { "route": "/menu_definition", "actions": ["read"] },
+                    { "route": "/menu_definition", "actions": ["create"] },
+                    { "route": "/menu_definition", "actions": ["update"] },
+                    { "route": "/menu_definition", "actions": ["delete"] }
+                ]
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "Extensions",
+            "icon": "heroicons:puzzle-piece",
+            "path": "/settings/extensions",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Extension management",
+            "order": 4,
+            "parent": "Settings",
+            "permission": {
+                "and": [
+                    { "route": "/extension_definition", "actions": ["read"] }
+                ]
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "Routings",
+            "icon": "heroicons:map",
+            "path": "/settings/routings",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Route management",
+            "order": 5,
+            "parent": "Settings",
+            "permission": {
+                "and": [
+                    { "route": "/route_definition", "actions": ["read"] },
+                    {
+                        "or": [
+                            { "route": "/route_definition", "actions": ["create"] },
+                            { "route": "/route_definition", "actions": ["update"] },
+                            { "route": "/route_definition", "actions": ["delete"] }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "Handlers",
+            "icon": "heroicons:command-line",
+            "path": "/settings/handlers",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Route handler management",
+            "order": 6,
+            "parent": "Settings",
+            "permission": {
+                "or": [{ "route": "/route_handler_definition", "actions": ["read"] }]
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "Hooks",
+            "icon": "heroicons:link",
+            "path": "/settings/hooks",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Hook management",
+            "order": 7,
+            "parent": "Settings",
+            "permission": {
+                "or": [{ "route": "/hook_definition", "actions": ["read"] }]
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "Bootstrap Scripts",
+            "icon": "heroicons:play",
+            "path": "/settings/bootstrap",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Bootstrap script management",
+            "order": 8,
+            "parent": "Settings",
+            "permission": {
+                "or": [{ "route": "/bootstrap_script_definition", "actions": ["read"] }]
+            }
+        },
+        {
+            "type": "Dropdown Menu",
+            "label": "AI",
+            "icon": "lucide:sparkles",
+            "path": "/ai",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "AI Agent and Configuration",
+            "order": 5,
+            "permission": {
+                "allowAll": true
+            }
+        },
+        {
+            "type": "Dropdown Menu",
+            "label": "Packages",
+            "icon": "lucide:package",
+            "path": "/packages",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Packages management",
+            "order": 8,
+            "permission": {
+                "or": [
+                    { "route": "/package_definition", "actions": ["read"] }
+                ]
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "Users",
+            "icon": "heroicons:users",
+            "path": "/settings/users",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "User management",
+            "order": 9,
+            "parent": "Settings",
+            "permission": {
+                "and": [
+                    { "route": "/user_definition", "actions": ["read"] }
+                ]
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "Roles",
+            "icon": "heroicons:shield-check",
+            "path": "/settings/roles",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Role management",
+            "order": 10,
+            "parent": "Settings",
+            "permission": {
+                "and": [
+                    { "route": "/role_definition", "actions": ["read"] }
+                ]
+            }
+        },
+        {
+            "type": "Dropdown Menu",
+            "label": "Storage",
+            "icon": "heroicons:server",
+            "path": "/storage",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Storage management",
+            "order": 5,
+            "permission": {
+                "or": [
+                    { "route": "/file_definition", "actions": ["read"] },
+                    { "route": "/storage/config", "actions": ["read"] }
+                ]
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "Storage Configurations",
+            "icon": "heroicons:cloud-arrow-up",
+            "path": "/storage/config",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Storage backend configurations",
+            "order": 2,
+            "parent": "Storage",
+            "permission": {
+                "or": [
+                    { "route": "/storage/config", "actions": ["read"] }
+                ]
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "Files Management",
+            "icon": "lucide:folder-tree",
+            "path": "/storage/management",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Files Management",
+            "order": 1,
+            "parent": "Storage",
+            "permission": {
+                "or": [
+                    { "route": "/file_definition", "actions": ["read"] }
+                ]
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "AI Chat",
+            "icon": "lucide:message-square",
+            "path": "/ai-agent/chat",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Chat with AI Agent",
+            "order": 1,
+            "parent": "AI",
+            "permission": {
+                "or": [
+                    { "route": "/ai-agent/chat", "actions": ["create"] },
+                    { "route": "/ai_conversation_definition", "actions": ["read"] }
+                ]
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "AI Configuration",
+            "icon": "lucide:settings",
+            "path": "/ai-agent/config",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Configure AI Agent settings",
+            "order": 2,
+            "parent": "AI",
+            "permission": {
+                "or": [
+                    { "route": "/ai_config_definition", "actions": ["read"] },
+                    { "route": "/ai_config_definition", "actions": ["update"] }
+                ]
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "Install Package",
+            "icon": "lucide:plus",
+            "path": "/packages/install",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Install Package",
+            "order": 1,
+            "parent": "Packages"
+        },
+        {
+            "type": "Menu",
+            "label": "App Packages",
+            "icon": "lucide:package-2",
+            "path": "/packages/app",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "App packages management",
+            "order": 2,
+            "parent": "Packages"
+        },
+        {
+            "type": "Menu",
+            "label": "Backend Packages",
+            "icon": "lucide:box",
+            "path": "/packages/backend",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "Backend packages management",
+            "order": 3,
+            "parent": "Packages"
+        }
+    ]
 }
+
+
+
