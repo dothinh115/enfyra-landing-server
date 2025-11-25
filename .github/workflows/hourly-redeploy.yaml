@@ -1,0 +1,90 @@
+name: Hourly Upstream Redeploy
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install sshpass
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+
+      - name: Check upstream and redeploy if needed
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PASSWORD: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          sshpass -p "$VPS_PASSWORD" ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST <<'ENDSSH'
+
+            export PROJECT_NAME="landing-server"
+            export APP_DIR="/apps/landing-server"
+            export PATH="$PATH:/usr/bin:/usr/local/bin:$HOME/.local/bin"
+
+            GIT_PATH=$(which git || echo "/usr/bin/git")
+            NPM_PATH=$(which npm || echo "/usr/bin/npm")
+            YARN_PATH=$(which yarn || echo "")
+            PM2_PATH=$(which pm2 || echo "$HOME/.local/bin/pm2")
+
+            if [ -z "$YARN_PATH" ]; then
+              echo "Yarn missing. Installing..."
+              $NPM_PATH install -g yarn
+              YARN_PATH=$(which yarn || echo "$HOME/.local/bin/yarn")
+            fi
+
+            echo "=== Hourly upstream check ==="
+            cd $APP_DIR
+
+            $GIT_PATH fetch origin main
+            LOCAL_HASH=$($GIT_PATH rev-parse HEAD)
+            REMOTE_HASH=$($GIT_PATH rev-parse origin/main)
+            echo "Local HEAD:  $LOCAL_HASH"
+            echo "Remote HEAD: $REMOTE_HASH"
+
+            if [ "$LOCAL_HASH" = "$REMOTE_HASH" ]; then
+              echo "No new commits detected. Skipping redeploy."
+              exit 0
+            fi
+
+            echo "New commits detected. Redeploying..."
+            $GIT_PATH reset --hard origin/main
+            $GIT_PATH clean -fd
+
+            echo "Installing dependencies..."
+            $YARN_PATH install --frozen-lockfile
+
+            if [ ! -f .env ]; then
+              echo ".env missing, copying from env_example"
+              cp env_example .env || true
+            fi
+
+            echo "Building application..."
+            $YARN_PATH build
+
+            echo "Restarting PM2 application..."
+            $PM2_PATH stop $PROJECT_NAME || true
+            $PM2_PATH delete $PROJECT_NAME || true
+            $PM2_PATH start ecosystem.config.js
+
+            echo "Waiting for app to stabilize..."
+            sleep 10
+            $PM2_PATH status
+
+            echo "Running health check..."
+            if $PM2_PATH show $PROJECT_NAME | grep -q "online"; then
+              echo "✅ Application is online after redeploy."
+            else
+              echo "❌ Application failed to start."
+              $PM2_PATH logs $PROJECT_NAME --lines 20 --nostream
+              exit 1
+            fi
+
+            echo "=== Recent logs ==="
+            $PM2_PATH logs $PROJECT_NAME --lines 30 --nostream || true
+          ENDSSH
+
