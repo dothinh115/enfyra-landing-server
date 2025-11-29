@@ -1,7 +1,10 @@
 name: Deploy to VPS
+
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -20,11 +23,9 @@ jobs:
           VPS_PASSWORD: ${{ secrets.VPS_PASSWORD }}
         run: |
           sshpass -p "$VPS_PASSWORD" ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
-            # Set project variables (FIXED: match ecosystem.config.js)
+            # Set project variables
             export PROJECT_NAME="landing-server"
             export APP_DIR="/apps/landing-server"
-
-            # Setup PATH for tools
             export PATH="$PATH:/usr/bin:/usr/local/bin:$HOME/.local/bin"
 
             # Find tool paths
@@ -40,7 +41,18 @@ jobs:
               YARN_PATH=$(which yarn || echo "$HOME/.local/bin/yarn")
             fi
 
-            echo "=== Starting PM2 Deployment ==="
+            # Determine trigger type
+            if [ "${{ github.event_name }}" = "push" ]; then
+              echo "=== Triggered by push to main - Always deploying ==="
+              FORCE_DEPLOY=true
+            elif [ "${{ github.event_name }}" = "schedule" ]; then
+              echo "=== Triggered by hourly schedule - Checking for new code ==="
+              FORCE_DEPLOY=false
+            else
+              echo "=== Triggered manually - Always deploying ==="
+              FORCE_DEPLOY=true
+            fi
+
             echo "Tools found:"
             echo "Git: $GIT_PATH"
             echo "NPM: $NPM_PATH"
@@ -51,12 +63,29 @@ jobs:
             cd $APP_DIR
             echo "Current directory: $(pwd)"
 
-            # Pull latest code with conflict resolution
+            # Check for new code if not force deploy
+            if [ "$FORCE_DEPLOY" = "false" ]; then
+              echo "Checking for new commits..."
+              $GIT_PATH fetch origin main
+              LOCAL_HASH=$($GIT_PATH rev-parse HEAD)
+              REMOTE_HASH=$($GIT_PATH rev-parse origin/main)
+              echo "Local HEAD:  $LOCAL_HASH"
+              echo "Remote HEAD: $REMOTE_HASH"
+
+              if [ "$LOCAL_HASH" = "$REMOTE_HASH" ]; then
+                echo "No new commits detected. Skipping redeploy."
+                exit 0
+              fi
+
+              echo "New commits detected. Proceeding with redeploy..."
+            fi
+
+            # Pull latest code
             echo "Pulling latest code..."
             $GIT_PATH fetch origin main
             $GIT_PATH reset --hard origin/main
             $GIT_PATH clean -fd
-            echo "✅ Code updated to latest from git (local changes discarded)"
+            echo "✅ Code updated to latest from git"
 
             # Install dependencies with yarn
             echo "Installing dependencies with yarn..."
