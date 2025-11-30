@@ -116,7 +116,7 @@ jobs:
             echo "Setting up PM2 ecosystem config..."
             if [ ! -f ecosystem.config.js ]; then
               echo "⚠️  ecosystem.config.js not found! Creating default config..."
-              cat > ecosystem.config.js << 'EOF'
+              cat > ecosystem.config.js << EOF
 module.exports = {
   apps: [
     {
