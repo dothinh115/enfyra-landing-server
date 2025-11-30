@@ -65,27 +65,41 @@ jobs:
 
             # Check for new code if not force deploy
             if [ "$FORCE_DEPLOY" = "false" ]; then
-              echo "Checking for new commits..."
-              $GIT_PATH fetch origin main
-              LOCAL_HASH=$($GIT_PATH rev-parse HEAD)
-              REMOTE_HASH=$($GIT_PATH rev-parse origin/main)
-              echo "Local HEAD:  $LOCAL_HASH"
-              echo "Remote HEAD: $REMOTE_HASH"
+              echo "Checking for new commits from upstream..."
 
-              if [ "$LOCAL_HASH" = "$REMOTE_HASH" ]; then
-                echo "No new commits detected. Skipping redeploy."
+              # Add upstream remote if not exists
+              if ! $GIT_PATH remote | grep -q upstream; then
+                echo "Adding upstream remote..."
+                $GIT_PATH remote add upstream https://github.com/enfyra/server.git
+              fi
+
+              # Fetch from both origin and upstream
+              $GIT_PATH fetch origin main
+              $GIT_PATH fetch upstream main
+
+              LOCAL_HASH=$($GIT_PATH rev-parse HEAD)
+              ORIGIN_HASH=$($GIT_PATH rev-parse origin/main)
+              UPSTREAM_HASH=$($GIT_PATH rev-parse upstream/main)
+
+              echo "Local HEAD:    $LOCAL_HASH"
+              echo "Origin HEAD:   $ORIGIN_HASH"
+              echo "Upstream HEAD: $UPSTREAM_HASH"
+
+              # Check if there are new commits from upstream
+              if [ "$LOCAL_HASH" = "$UPSTREAM_HASH" ]; then
+                echo "No new commits from upstream detected. Skipping redeploy."
                 exit 0
               fi
 
-              echo "New commits detected. Proceeding with redeploy..."
+              echo "New commits from upstream detected. Proceeding with redeploy..."
             fi
 
-            # Pull latest code
-            echo "Pulling latest code..."
-            $GIT_PATH fetch origin main
-            $GIT_PATH reset --hard origin/main
+            # Pull latest code from upstream and merge
+            echo "Pulling latest code from upstream..."
+            $GIT_PATH fetch upstream main
+            $GIT_PATH reset --hard upstream/main
             $GIT_PATH clean -fd
-            echo "✅ Code updated to latest from git"
+            echo "✅ Code updated to latest from upstream"
 
             # Install dependencies with yarn
             echo "Installing dependencies with yarn..."
