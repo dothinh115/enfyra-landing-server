@@ -1,7 +1,7 @@
 name: Notify Deploy Complete - Enfyra Landing Server
 on:
   workflow_run:
-    workflows: ["Deploy demo server to VPS"]  
+    workflows: ["Deploy to VPS"]  
     types: [completed]
 jobs:
   notify:
