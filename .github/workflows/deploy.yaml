@@ -116,7 +116,7 @@ jobs:
             echo "Setting up PM2 ecosystem config..."
             if [ ! -f ecosystem.config.js ]; then
               echo "⚠️  ecosystem.config.js not found! Creating default config..."
-              echo "module.exports = {\n  apps: [\n    {\n      name: \"landing-server\",\n      script: \"./dist/src/main.js\",\n      exec_mode: \"fork\",\n      env: {\n        NODE_ENV: \"production\",\n      },\n      error_file: \"./logs/pm2-error.log\",\n      out_file: \"./logs/pm2-out.log\",\n      log_date_format: \"YYYY-MM-DD HH:mm:ss Z\",\n      merge_logs: true,\n      autorestart: true,\n      max_memory_restart: \"1G\",\n      watch: false,\n      ignore_watch: [\"node_modules\", \"logs\", \".git\"],\n    },\n  ],\n};" > ecosystem.config.js
+              printf 'module.exports = {\n  apps: [\n    {\n      name: "landing-server",\n      script: "./dist/src/main.js",\n      exec_mode: "fork",\n      env: {\n        NODE_ENV: "production",\n      },\n      error_file: "./logs/pm2-error.log",\n      out_file: "./logs/pm2-out.log",\n      log_date_format: "YYYY-MM-DD HH:mm:ss Z",\n      merge_logs: true,\n      autorestart: true,\n      max_memory_restart: "1G",\n      watch: false,\n      ignore_watch: ["node_modules", "logs", ".git"],\n    },\n  ],\n};' > ecosystem.config.js
               echo "✅ Created ecosystem.config.js"
             else
               echo "✅ ecosystem.config.js already exists"
