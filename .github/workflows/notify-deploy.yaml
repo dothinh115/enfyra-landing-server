@@ -1,0 +1,141 @@
+name: Notify Deploy Complete - Enfyra Landing Server
+on:
+  workflow_run:
+    workflows: ["Deploy to VPS"]  
+    types: [completed]
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.head_branch == 'main' }}
+    steps:
+      - name: Get workflow logs if failed
+        if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+        id: get_logs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runId = context.payload.workflow_run.id;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            
+            try {
+              const jobs = await github.rest.actions.listJobsForWorkflowRun({
+                owner,
+                repo,
+                run_id: runId,
+              });
+              
+              let errorLogs = '';
+              
+              for (const job of jobs.data.jobs) {
+                if (job.conclusion === 'failure') {
+                  try {
+                    const logs = await github.rest.actions.downloadJobLogsForWorkflowRun({
+                      owner,
+                      repo,
+                      job_id: job.id,
+                    });
+                    
+                    const logText = logs.data;
+                    const lines = logText.split('\n');
+                    const errorLines = lines
+                      .filter(line => line.includes('Error') || line.includes('ERROR') || line.includes('error') || line.includes('failed') || line.includes('Failed'))
+                      .slice(-15)
+                      .join('\n');
+                    
+                    if (errorLines) {
+                      errorLogs += `**Job: ${job.name}**\n\`\`\`\n${errorLines.substring(0, 800)}\n\`\`\`\n`;
+                    }
+                  } catch (e) {
+                    console.log(`Could not get logs for job ${job.id}`);
+                  }
+                }
+              }
+              
+              return errorLogs || 'No error details available';
+            } catch (error) {
+              return 'Could not fetch error logs';
+            }
+      
+      - name: Send Discord notification
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          ACTION: ${{ github.event.action }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.event.workflow_run.html_url || format('{0}/{1}/actions/runs/{2}', github.server_url, github.repository, github.event.workflow_run.id) }}
+          BRANCH: ${{ github.event.workflow_run.head_branch || 'main' }}
+          COMMIT_MSG: ${{ github.event.workflow_run.head_commit.message || github.event.workflow_run.head_sha || 'N/A' }}
+          PUSHER: ${{ github.event.workflow_run.head_commit.author.name || github.event.workflow_run.actor.login || github.actor }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          ERROR_LOGS: ${{ steps.get_logs.outputs.result || '' }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "Missing DISCORD_WEBHOOK. Exiting."
+            exit 1
+          fi
+          
+          cat > /tmp/notify.py <<'PYTHON_SCRIPT'
+          import os, json, datetime
+          
+          action = os.getenv("ACTION", "")
+          wf = os.getenv("WORKFLOW_NAME", "Workflow")
+          repo = os.getenv("REPO", "")
+          run_url = os.getenv("RUN_URL", "")
+          branch = os.getenv("BRANCH", "")
+          commit_msg = os.getenv("COMMIT_MSG", "N/A")
+          pusher = os.getenv("PUSHER", "N/A")
+          run_id = os.getenv("RUN_ID", "N/A")
+          conclusion = os.getenv("CONCLUSION", "")
+          error_logs = os.getenv("ERROR_LOGS", "")
+          
+          if conclusion == "success":
+              state = "✅ SUCCESS"
+              color = 3066993
+              status_text = "🚀 Enfyra Landing Server deployed successfully"
+          elif conclusion == "failure":
+              state = "❌ FAILED"
+              color = 15158332
+              status_text = "⚠️ Enfyra Landing Server deployment failed"
+          elif conclusion == "cancelled":
+              state = "⚠️ CANCELLED"
+              color = 16776960
+              status_text = "Deployment was cancelled"
+          else:
+              state = f"⚠️ {conclusion.upper() if conclusion else 'UNKNOWN'}"
+              color = 10070709
+              status_text = f"Deployment ended with status: {conclusion or 'unknown'}"
+          
+          max_len = 900
+          if len(commit_msg) > max_len:
+              commit_msg = commit_msg[:897] + "..."
+          
+          fields = [
+              {"name": "Branch", "value": branch or "N/A", "inline": True},
+              {"name": "Pusher", "value": pusher or "N/A", "inline": True},
+              {"name": "Commit", "value": commit_msg or "N/A", "inline": False},
+          ]
+          
+          if conclusion == "failure" and error_logs:
+              fields.append({"name": "Error Details", "value": error_logs[:1000], "inline": False})
+          
+          fields.append({"name": "Workflow Run", "value": f"[View Details]({run_url})" if run_url else "N/A", "inline": False})
+          
+          payload = {
+              "username": "GitHub Actions Bot",
+              "embeds": [
+                  {
+                      "title": f"**{repo}** - Enfyra Landing Server",
+                      "description": f"## {state}\n{status_text}",
+                      "color": color,
+                      "fields": fields,
+                      "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
+                  }
+              ]
+          }
+          
+          print(json.dumps(payload))
+          PYTHON_SCRIPT
+          
+          python3 /tmp/notify.py | curl -s -H "Content-Type: application/json" -d @- "$DISCORD_WEBHOOK"
