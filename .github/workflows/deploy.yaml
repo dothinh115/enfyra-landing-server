@@ -63,15 +63,15 @@ jobs:
             cd $APP_DIR
             echo "Current directory: $(pwd)"
 
+            # Add upstream remote if not exists (do this before any checks)
+            if ! $GIT_PATH remote | grep -q upstream; then
+              echo "Adding upstream remote..."
+              $GIT_PATH remote add upstream https://github.com/enfyra/server.git
+            fi
+
             # Check for new code if not force deploy
             if [ "$FORCE_DEPLOY" = "false" ]; then
               echo "Checking for new commits from upstream..."
-
-              # Add upstream remote if not exists
-              if ! $GIT_PATH remote | grep -q upstream; then
-                echo "Adding upstream remote..."
-                $GIT_PATH remote add upstream https://github.com/enfyra/server.git
-              fi
 
               # Fetch from both origin and upstream
               $GIT_PATH fetch origin main
