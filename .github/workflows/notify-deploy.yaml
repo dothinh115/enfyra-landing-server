@@ -93,11 +93,11 @@ jobs:
           if conclusion == "success":
               state = "✅ SUCCESS"
               color = 3066993
-              status_text = "🚀 Demo Server deployed successfully"
+              status_text = "🚀 Enfyra Landing Server deployed successfully"
           elif conclusion == "failure":
               state = "❌ FAILED"
               color = 15158332
-              status_text = "⚠️ Demo Server deployment failed"
+              status_text = "⚠️ Enfyra Landing Server deployment failed"
           elif conclusion == "cancelled":
               state = "⚠️ CANCELLED"
               color = 16776960
@@ -126,7 +126,7 @@ jobs:
               "username": "GitHub Actions Bot",
               "embeds": [
                   {
-                      "title": f"**{repo}** - Demo Server",
+                      "title": f"**{repo}** - Enfyra Landing Server",
                       "description": f"## {state}\n{status_text}",
                       "color": color,
                       "fields": fields,
