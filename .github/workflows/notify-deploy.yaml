@@ -8,8 +8,51 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.head_branch == 'main' }}
     steps:
+      - name: Check if deployment was skipped
+        id: check_skip
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runId = context.payload.workflow_run.id;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            
+            try {
+              const jobs = await github.rest.actions.listJobsForWorkflowRun({
+                owner,
+                repo,
+                run_id: runId,
+              });
+              
+              // Check if any job log contains "Skipping redeploy" or "No new commits"
+              for (const job of jobs.data.jobs) {
+                try {
+                  const logs = await github.rest.actions.downloadJobLogsForWorkflowRun({
+                    owner,
+                    repo,
+                    job_id: job.id,
+                  });
+                  
+                  const logText = logs.data.toString();
+                  
+                  if (logText.includes('Skipping redeploy') || 
+                      logText.includes('No new commits detected')) {
+                    console.log('Deployment was skipped - no notification needed');
+                    return 'true';
+                  }
+                } catch (e) {
+                  console.log(`Could not get logs for job ${job.id}`);
+                }
+              }
+              
+              return 'false';
+            } catch (error) {
+              console.log('Error checking logs:', error);
+              return 'false';
+            }
+      
       - name: Get workflow logs if failed
-        if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+        if: ${{ steps.check_skip.outputs.result == 'false' && github.event.workflow_run.conclusion == 'failure' }}
         id: get_logs
         uses: actions/github-script@v7
         with:
@@ -58,6 +101,7 @@ jobs:
             }
       
       - name: Send Discord notification
+        if: ${{ steps.check_skip.outputs.result == 'false' }}
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
           ACTION: ${{ github.event.action }}
@@ -72,12 +116,14 @@ jobs:
           ERROR_LOGS: ${{ steps.get_logs.outputs.result || '' }}
         run: |
           if [ -z "$DISCORD_WEBHOOK" ]; then
-            echo "Missing DISCORD_WEBHOOK. Exiting."
+            echo "ERROR: DISCORD_WEBHOOK_URL secret is not set"
             exit 1
           fi
           
+          echo "Sending Discord notification..."
+          
           cat > /tmp/notify.py <<'PYTHON_SCRIPT'
-          import os, json, datetime
+          import os, json, datetime, sys
           
           action = os.getenv("ACTION", "")
           wf = os.getenv("WORKFLOW_NAME", "Workflow")
@@ -130,12 +176,34 @@ jobs:
                       "description": f"## {state}\n{status_text}",
                       "color": color,
                       "fields": fields,
-                      "timestamp": datetime.datetime.utcnow().isoformat() + "Z"
+                      "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
                   }
               ]
           }
           
-          print(json.dumps(payload))
+          print(json.dumps(payload), file=sys.stdout)
           PYTHON_SCRIPT
           
-          python3 /tmp/notify.py | curl -s -H "Content-Type: application/json" -d @- "$DISCORD_WEBHOOK"
+          # Generate payload and send to Discord
+          PAYLOAD=$(python3 /tmp/notify.py)
+          
+          if [ $? -ne 0 ]; then
+            echo "❌ Failed to generate payload"
+            exit 1
+          fi
+          
+          # Send to Discord with better error handling
+          HTTP_CODE=$(curl -s -w "%{http_code}" -o /tmp/discord_response.txt \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "$DISCORD_WEBHOOK")
+          
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✅ Discord notification sent successfully (HTTP $HTTP_CODE)"
+          else
+            echo "❌ Discord API returned HTTP $HTTP_CODE"
+            echo "Response:"
+            cat /tmp/discord_response.txt
+            exit 1
+          fi
