@@ -82,6 +82,18 @@ export interface TDynamicContext {
     };
   };
   $uploadedFile?: UploadedFileInfo;
+  $socket?: {
+    emit?: (event: string, data: any) => void | Promise<void>;
+    join?: (room: string) => void | Promise<void>;
+    leave?: (room: string) => void | Promise<void>;
+    to?: (room: string) => any;
+    close?: () => void | Promise<void>;
+    rooms?: Set<string> | string[];
+    emitToUser?: (userId: any, event: string, data: any) => void;
+    emitToRoom?: (room: string, event: string, data: any) => void;
+    emitToNamespace?: (path: string, event: string, data: any) => void;
+    emitToAll?: (event: string, data: any) => void;
+  };
 }
 
 export interface RequestWithRouteData extends Request {

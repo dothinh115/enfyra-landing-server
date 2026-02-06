@@ -1,6 +1,4 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
-
-// Base custom exception class
 export abstract class CustomException extends HttpException {
   constructor(
     message: string,
@@ -18,14 +16,11 @@ export abstract class CustomException extends HttpException {
     );
   }
 }
-
-// Business Logic Exceptions
 export class BusinessLogicException extends CustomException {
   constructor(message: string, details?: any) {
     super(message, HttpStatus.BAD_REQUEST, 'BUSINESS_LOGIC_ERROR', details);
   }
 }
-
 export class ValidationException extends CustomException {
   constructor(message: string, details?: any) {
     super(
@@ -36,7 +31,6 @@ export class ValidationException extends CustomException {
     );
   }
 }
-
 export class ResourceNotFoundException extends CustomException {
   constructor(resource: string, identifier?: string) {
     const message = identifier
@@ -48,7 +42,6 @@ export class ResourceNotFoundException extends CustomException {
     });
   }
 }
-
 export class DuplicateResourceException extends CustomException {
   constructor(resource: string, field: string, value: string) {
     super(
@@ -59,39 +52,31 @@ export class DuplicateResourceException extends CustomException {
     );
   }
 }
-
-// Authentication & Authorization Exceptions
 export class AuthenticationException extends CustomException {
   constructor(message: string = 'Authentication failed', details?: any) {
     super(message, HttpStatus.UNAUTHORIZED, 'AUTHENTICATION_ERROR', details);
   }
 }
-
 export class AuthorizationException extends CustomException {
   constructor(message: string = 'Insufficient permissions', details?: any) {
     super(message, HttpStatus.FORBIDDEN, 'AUTHORIZATION_ERROR', details);
   }
 }
-
 export class TokenExpiredException extends CustomException {
   constructor() {
     super('Token has expired', HttpStatus.UNAUTHORIZED, 'TOKEN_EXPIRED');
   }
 }
-
 export class InvalidTokenException extends CustomException {
   constructor() {
     super('Invalid token provided', HttpStatus.UNAUTHORIZED, 'INVALID_TOKEN');
   }
 }
-
-// Database Exceptions
 export class DatabaseException extends CustomException {
   constructor(message: string, details?: any) {
     super(message, HttpStatus.INTERNAL_SERVER_ERROR, 'DATABASE_ERROR', details);
   }
 }
-
 export class DatabaseConnectionException extends CustomException {
   constructor() {
     super(
@@ -101,14 +86,11 @@ export class DatabaseConnectionException extends CustomException {
     );
   }
 }
-
 export class DatabaseQueryException extends CustomException {
   constructor(message: string, details?: any) {
     super(message, HttpStatus.BAD_REQUEST, 'DATABASE_QUERY_ERROR', details);
   }
 }
-
-// External Service Exceptions
 export class ExternalServiceException extends CustomException {
   constructor(service: string, message: string, details?: any) {
     super(
@@ -119,7 +101,6 @@ export class ExternalServiceException extends CustomException {
     );
   }
 }
-
 export class ServiceUnavailableException extends CustomException {
   constructor(service: string) {
     super(
@@ -130,8 +111,6 @@ export class ServiceUnavailableException extends CustomException {
     );
   }
 }
-
-// Rate Limiting & Throttling
 export class RateLimitExceededException extends CustomException {
   constructor(limit: number, window: string) {
     super(
@@ -142,8 +121,6 @@ export class RateLimitExceededException extends CustomException {
     );
   }
 }
-
-// Script & Dynamic Code Exceptions
 export class ScriptExecutionException extends CustomException {
   constructor(message: string, scriptId?: string, details?: any) {
     super(
@@ -154,7 +131,6 @@ export class ScriptExecutionException extends CustomException {
     );
   }
 }
-
 export class ScriptTimeoutException extends CustomException {
   constructor(timeoutMs: number, scriptId?: string) {
     super(
@@ -165,14 +141,11 @@ export class ScriptTimeoutException extends CustomException {
     );
   }
 }
-
-// Schema & Configuration Exceptions
 export class SchemaException extends CustomException {
   constructor(message: string, details?: any) {
     super(message, HttpStatus.BAD_REQUEST, 'SCHEMA_ERROR', details);
   }
 }
-
 export class ConfigurationException extends CustomException {
   constructor(message: string, configKey?: string) {
     super(
@@ -183,14 +156,11 @@ export class ConfigurationException extends CustomException {
     );
   }
 }
-
-// File & Upload Exceptions
 export class FileUploadException extends CustomException {
   constructor(message: string, details?: any) {
     super(message, HttpStatus.BAD_REQUEST, 'FILE_UPLOAD_ERROR', details);
   }
 }
-
 export class FileNotFoundException extends CustomException {
   constructor(filePath: string) {
     super(
@@ -201,7 +171,6 @@ export class FileNotFoundException extends CustomException {
     );
   }
 }
-
 export class FileSizeExceededException extends CustomException {
   constructor(maxSize: string, actualSize: string) {
     super(
@@ -212,20 +181,15 @@ export class FileSizeExceededException extends CustomException {
     );
   }
 }
-
-// Utility function to check if an exception is a custom exception
 export function isCustomException(
   exception: any,
 ): exception is CustomException {
   return exception instanceof CustomException;
 }
-
-// Utility function to get error code from any exception
 export function getErrorCode(exception: any): string {
   if (isCustomException(exception)) {
     return exception.errorCode;
   }
-
   if (exception instanceof HttpException) {
     const status = exception.getStatus();
     const errorCodeMap: Record<number, string> = {
@@ -242,6 +206,5 @@ export function getErrorCode(exception: any): string {
     };
     return errorCodeMap[status] || 'UNKNOWN_ERROR';
   }
-
   return 'UNKNOWN_ERROR';
 }

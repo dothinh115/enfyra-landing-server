@@ -40,6 +40,7 @@ import { QueryBuilderModule } from './infrastructure/query-builder/query-builder
 import { DatabaseSchemaService } from './infrastructure/knex/services/database-schema.service';
 import { AdminModule } from './modules/admin/admin.module';
 import { AiAgentModule } from './modules/ai-agent/ai-agent.module';
+import { WebsocketModule } from './modules/websocket/websocket.module';
 
 @Global()
 @Module({
@@ -89,6 +90,7 @@ import { AiAgentModule } from './modules/ai-agent/ai-agent.module';
     EnfyraSwaggerModule,
     AdminModule,
     AiAgentModule,
+    WebsocketModule,
     DynamicModule,
     HandlerExecutorModule,
     GraphqlModule,

@@ -18,11 +18,10 @@ import { CacheService } from '../cache/services/cache.service';
 import { SwaggerService } from '../swagger/services/swagger.service';
 import { GraphqlService } from 'src/modules/graphql/services/graphql.service';
 import { UploadFileHelper } from '../../shared/helpers/upload-file.helper';
-
+import { DynamicWebSocketGateway } from '../../modules/websocket/gateway/dynamic-websocket.gateway';
 @Injectable()
 export class RouteDetectMiddleware implements NestMiddleware {
   private readonly logger = new Logger(RouteDetectMiddleware.name);
-
   constructor(
     private queryBuilder: QueryBuilderService,
     private jwtService: JwtService,
@@ -39,8 +38,8 @@ export class RouteDetectMiddleware implements NestMiddleware {
     private swaggerService: SwaggerService,
     private graphqlService: GraphqlService,
     private uploadFileHelper: UploadFileHelper,
+    private websocketGateway: DynamicWebSocketGateway,
   ) {}
-
   async use(req: any, res: any, next: (error?: any) => void) {
     const method = req.method;
     const routeEngine = this.routeCacheService.getRouteEngine();
@@ -50,16 +49,12 @@ export class RouteDetectMiddleware implements NestMiddleware {
       'column_definition',
       'relation_definition',
     ];
-
       if (matchedRoute) {
         const realClientIP = this.detectClientIP(req);
-        
       const context: TDynamicContext = {
         $body: req.routeData?.context?.$body || req.body || {},
-        $data: undefined,
         $statusCode: undefined,
         $throw: ScriptErrorFactory.createThrowHandlers(),
-        $logs(...args) {},
         $helpers: {
           $jwt: (payload: any, exp: string) =>
             this.jwtService.sign(payload, { expiresIn: exp }),
@@ -82,6 +77,20 @@ export class RouteDetectMiddleware implements NestMiddleware {
         $share: {
           $logs: [],
         },
+        $socket: {
+          emitToUser: (userId: any, event: string, data: any) => {
+            this.websocketGateway.emitToUser(userId, event, data);
+          },
+          emitToRoom: (room: string, event: string, data: any) => {
+            this.websocketGateway.emitToRoom(room, event, data);
+          },
+          emitToNamespace: (path: string, event: string, data: any) => {
+            this.websocketGateway.emitToNamespace(path, event, data);
+          },
+          emitToAll: (event: string, data: any) => {
+            this.websocketGateway.emitToAll(event, data);
+          },
+        },
         $api: {
           request: {
             method: req.method,
@@ -96,7 +105,6 @@ export class RouteDetectMiddleware implements NestMiddleware {
       context.$logs = (...args: any[]) => {
         context.$share.$logs.push(...args);
       };
-
       if (req.file) {
         context.$uploadedFile = {
           originalname: req.file.originalname,
@@ -130,26 +138,20 @@ export class RouteDetectMiddleware implements NestMiddleware {
             swaggerService: this.swaggerService,
             graphqlService: this.graphqlService,
           });
-
           await dynamicRepo.init();
           const name = table?.alias ?? table?.name;
-
           return [`${name}`, dynamicRepo];
         }),
       );
-
       context.$repos = Object.fromEntries(dynamicFindEntries);
-
       Object.values(context.$repos).forEach((repo: any) => {
         repo.context = context;
       });
-
       const mainTableName =
         matchedRoute.route.mainTable?.alias ?? matchedRoute.route?.mainTable?.name;
       if (context.$repos[mainTableName]) {
         context.$repos.main = context.$repos[mainTableName];
       }
-
       try {
         context.$helpers.$uploadFile = this.uploadFileHelper.createUploadFileHelper(context);
         context.$helpers.$updateFile = this.uploadFileHelper.createUpdateFileHelper(context);
@@ -157,28 +159,19 @@ export class RouteDetectMiddleware implements NestMiddleware {
       } catch (error) {
         this.logger.warn('Failed to initialize file helpers:', error);
       }
-      
       const { route, params } = matchedRoute;
-
       const filterHooks = (hooks: any[]) => {
         if (!hooks || !Array.isArray(hooks)) return [];
         return hooks.filter((hook: any) => {
           const methodList = hook.methods?.map((m: any) => m.method) ?? [];
-
-          // Global hooks: must have isGlobal=true and method must match
           const isGlobalMethod = hook.isGlobal === true && methodList.includes(method);
-          
-          // Local hooks: must match route and method must match
           const isLocalMethod =
             hook.isGlobal === false && hook.route?.id === route.id && methodList.includes(method);
-
           return isGlobalMethod || isLocalMethod;
         });
       };
-
       const filteredPreHooks = filterHooks(route.preHook);
       const filteredPostHooks = filterHooks(route.postHook);
-
       req.routeData = {
         ...route,
         handler:
@@ -192,25 +185,21 @@ export class RouteDetectMiddleware implements NestMiddleware {
             (pubMethod: any) => pubMethod.method === req.method,
           ) || false,
         context,
-        res, // Store response object for handler access
+        res,
       };
     }
     next();
   }
-
   private generateCorrelationId(): string {
-    return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
-
   private detectClientIP(req: any): string {
     const forwardedFor = req.headers['x-forwarded-for'];
     const realIP = req.headers['x-real-ip'];
-    const cfConnectingIP = req.headers['cf-connecting-ip']; // Cloudflare
+    const cfConnectingIP = req.headers['cf-connecting-ip'];
     const remoteAddress = req.connection?.remoteAddress || req.socket?.remoteAddress;
     const reqIP = req.ip;
-
     let clientIP: string;
-
     if (forwardedFor) {
       clientIP = forwardedFor.split(',')[0].trim();
     }
@@ -229,11 +218,9 @@ export class RouteDetectMiddleware implements NestMiddleware {
     else {
       clientIP = reqIP || remoteAddress || 'unknown';
     }
-
     if (clientIP === '::1') {
       clientIP = '127.0.0.1';
     }
-
     if (clientIP?.startsWith('::ffff:')) {
       clientIP = clientIP.substring(7);
     }

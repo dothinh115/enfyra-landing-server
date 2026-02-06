@@ -19,6 +19,8 @@ import { FolderDefinitionProcessor } from './processors/folder-definition.proces
 import { BootstrapScriptDefinitionProcessor } from './processors/bootstrap-script-definition.processor';
 import { RoutePermissionDefinitionProcessor } from './processors/route-permission-definition.processor';
 import { AiConfigDefinitionProcessor } from './processors/ai-config-definition.processor';
+import { WebsocketDefinitionProcessor } from './processors/websocket-definition.processor';
+import { WebsocketEventDefinitionProcessor } from './processors/websocket-event-definition.processor';
 
 @Global()
 @Module({
@@ -41,6 +43,8 @@ import { AiConfigDefinitionProcessor } from './processors/ai-config-definition.p
     BootstrapScriptDefinitionProcessor,
     RoutePermissionDefinitionProcessor,
     AiConfigDefinitionProcessor,
+    WebsocketDefinitionProcessor,
+    WebsocketEventDefinitionProcessor,
     BootstrapScriptService,
   ],
   exports: [BootstrapService, CoreInitService, DefaultDataService, BootstrapScriptService],

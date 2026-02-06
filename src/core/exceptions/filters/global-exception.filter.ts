@@ -13,7 +13,6 @@ import {
   isCustomException,
   getErrorCode,
 } from '../custom-exceptions';
-
 export interface ErrorResponse {
   success: false;
   message: string;
@@ -28,29 +27,19 @@ export interface ErrorResponse {
     correlationId?: string;
   };
 }
-
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
-
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-
-    // Extract correlation ID from headers or generate new one
     const correlationId =
       (request.headers['x-correlation-id'] as string) ||
       this.generateCorrelationId();
-
-    // Determine status code and error details
     const { statusCode, errorCode, message, details } =
       this.getErrorDetails(exception);
-
-    // Log error with structured format
     this.logError(exception, request, correlationId, statusCode);
-
-    // Create standardized error response
     const errorResponse: ErrorResponse = {
       success: false,
       message,
@@ -65,30 +54,22 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         correlationId,
       },
     };
-
-    // Handle GraphQL errors differently
     if (this.isGraphQLContext(host)) {
       this.handleGraphQLError(exception, host, correlationId);
       return;
     }
-
-    // Attach logs if available
     const logs = (exception as any)?.logs;
     if (logs && Array.isArray(logs) && logs.length > 0) {
       (errorResponse as any).logs = logs;
     }
-
-    // Send HTTP response
     response.status(statusCode).json(errorResponse);
   }
-
   private getErrorDetails(exception: unknown): {
     statusCode: number;
     errorCode: string;
     message: string;
     details?: any;
   } {
-    // Handle Custom Exceptions first
     if (isCustomException(exception)) {
       return {
         statusCode: exception.getStatus(),
@@ -97,12 +78,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         details: exception.details,
       };
     }
-
-    // Handle HttpException (NestJS built-in exceptions)
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       const response = exception.getResponse() as any;
-
       return {
         statusCode: status,
         errorCode: getErrorCode(exception),
@@ -110,8 +88,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         details: response?.details || null,
       };
     }
-
-    // Handle GraphQLError
     if (exception instanceof GraphQLError) {
       return {
         statusCode: HttpStatus.BAD_REQUEST,
@@ -120,8 +96,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         details: exception.extensions,
       };
     }
-
-    // Handle unknown errors
     if (exception instanceof Error) {
       return {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -131,8 +105,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           process.env.NODE_ENV === 'development' ? exception.stack : null,
       };
     }
-
-    // Handle other types of errors
     return {
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       errorCode: 'UNKNOWN_ERROR',
@@ -140,7 +112,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       details: exception,
     };
   }
-
   private getErrorCodeFromStatus(status: number): string {
     const errorCodeMap: Record<number, string> = {
       400: 'BAD_REQUEST',
@@ -154,10 +125,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       502: 'BAD_GATEWAY',
       503: 'SERVICE_UNAVAILABLE',
     };
-
     return errorCodeMap[status] || 'UNKNOWN_ERROR';
   }
-
   private logError(
     exception: unknown,
     request: Request,
@@ -181,7 +150,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             }
           : exception,
     };
-
     if (statusCode >= 500) {
       this.logger.error('Server Error', logData);
     } else if (statusCode >= 400) {
@@ -190,26 +158,20 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       this.logger.log('Other Error', logData);
     }
   }
-
   private isGraphQLContext(host: ArgumentsHost): boolean {
     const context = host.getType();
-    // Check if this is a GraphQL context by looking at the request
     const request = host.switchToHttp().getRequest();
     return (
       request?.body?.query !== undefined || request?.url?.includes('/graphql')
     );
   }
-
   private handleGraphQLError(
     exception: unknown,
     host: ArgumentsHost,
     correlationId: string,
   ): void {
-    // GraphQL errors are handled by the GraphQL context
-    // This method can be extended if needed
     this.logger.error('GraphQL Error', { exception, correlationId });
   }
-
   private generateCorrelationId(): string {
     return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }

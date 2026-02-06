@@ -1,6 +1,6 @@
 {
   "name": "enfyra-server",
-  "version": "1.3.4",
+  "version": "1.4.0",
   "description": "Dynamic backend platform that auto-generates REST and GraphQL APIs from database schemas",
   "author": "dothinh115 <dothinh115@gmail.com>",
   "private": false,
@@ -35,15 +35,20 @@
     "@langchain/langgraph": "^1.0.2",
     "@langchain/openai": "^1.1.0",
     "@liaoliaots/nestjs-redis": "^10.0.0",
+    "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.0",
     "@nestjs/jwt": "^11.0.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/platform-socket.io": "^11.1.12",
     "@nestjs/schedule": "^6.0.1",
     "@nestjs/swagger": "^8.0.7",
+    "@nestjs/websockets": "^11.1.12",
+    "@types/ws": "^8.18.1",
     "bcryptjs": "^3.0.2",
+    "bullmq": "^5.67.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "cors": "^2.8.5",
@@ -51,7 +56,7 @@
     "generic-pool": "^3.9.0",
     "graphql": "^16.11.0",
     "graphql-yoga": "^5.13.5",
-    "ioredis": "^5.6.1",
+    "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.2",
     "knex": "^3.1.0",
     "lodash": "^4.17.21",
@@ -65,8 +70,11 @@
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "sharp": "^0.34.3",
+    "socket.io": "^4.8.3",
+    "socket.io-redis": "^6.1.1",
     "sqlite3": "^5.1.7",
     "uuid": "^11.1.0",
+    "ws": "^8.19.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -85,6 +93,7 @@
     "eslint-plugin-prettier": "^5.0.0",
     "jest": "^30.0.5",
     "prettier": "^3.0.0",
+    "socket.io-client": "^4.8.3",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
     "ts-jest": "^29.1.0",
@@ -92,28 +101,6 @@
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.1.3"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": ".",
-    "testMatch": [
-      "<rootDir>/test/**/*.spec.ts"
-    ],
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "src/**/*.(t|j)s",
-      "!src/**/*.spec.ts",
-      "!src/**/*.interface.ts",
-      "!src/**/*.dto.ts"
-    ],
-    "coverageDirectory": "coverage",
-    "testEnvironment": "node"
   },
   "resolutions": {
     "string-width": "4.2.3",

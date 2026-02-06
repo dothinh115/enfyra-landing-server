@@ -1,20 +1,13 @@
-// @nestjs packages
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-
-// Internal imports
 import { GraphqlService } from './modules/graphql/services/graphql.service';
-
-// Relative imports
 import { AppModule } from './app.module';
 import { initializeDatabase } from '../scripts/init-db';
-
 async function bootstrap() {
   const startTime = Date.now();
   const logger = new Logger('Main');
   logger.log('Starting Cold Start');
-
   try {
     const initStart = Date.now();
     await initializeDatabase();
@@ -23,11 +16,14 @@ async function bootstrap() {
     logger.error('Error during initialization:', err);
     process.exit(1);
   }
-
   const nestStart = Date.now();
-  const app = await NestFactory.create(AppModule);
-
+  const app = await NestFactory.create(AppModule, {
+    bodyParser: true,
+    rawBody: true,
+  });
   const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.use(require('express').json({ limit: '50mb' }));
+  expressApp.use(require('express').urlencoded({ limit: '50mb', extended: true }));
   const qs = require('qs');
   expressApp.set('query parser', (str: string) => {
     return qs.parse(str, {
@@ -38,14 +34,10 @@ async function bootstrap() {
       arrayLimit: 200,
     });
   });
-
   logger.log(`NestJS Create: ${Date.now() - nestStart}ms`);
-
-  // Setup GraphQL endpoint
   try {
     const graphqlService = app.get(GraphqlService);
     const expressApp = app.getHttpAdapter().getInstance();
-    
     expressApp.use('/graphql', (req, res, next) => {
       return graphqlService.getYogaInstance()(req, res, next);
     });
@@ -53,9 +45,7 @@ async function bootstrap() {
   } catch (error) {
     logger.warn('GraphQL endpoint not available:', error.message);
   }
-
   const configService = app.get(ConfigService);
-
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -66,15 +56,12 @@ async function bootstrap() {
       },
     }),
   );
-
   const appInitStart = Date.now();
   await app.init();
   logger.log(`App Init (Bootstrap): ${Date.now() - appInitStart}ms`);
-
   const listenStart = Date.now();
   await app.listen(configService.get('PORT') || 1105);
   logger.log(`HTTP Listen: ${Date.now() - listenStart}ms`);
-
   const totalTime = Date.now() - startTime;
   logger.log(`Cold Start completed! Total time: ${totalTime}ms`);
 }
