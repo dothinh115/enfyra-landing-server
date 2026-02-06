@@ -50,6 +50,11 @@ export class RedisPubSubService implements OnModuleInit, OnModuleDestroy {
     channel: string,
     handler: (channel: string, message: string) => void
   ): boolean {
+    if (!this.sub) {
+      console.warn('[RedisPubSub] Redis subscriber not initialized yet, queuing subscription');
+      setTimeout(() => this.subscribeWithHandler(channel, handler), 100);
+      return false;
+    }
     const decoratedChannel = this.decorateChannel(channel);
     if (this.subscribedChannels.has(decoratedChannel)) {
       return false;

@@ -1,6 +1,3 @@
-/**
- * OpenAPI Schema Object type
- */
 interface SchemaObject {
   type?: string;
   format?: string;
@@ -10,29 +7,16 @@ interface SchemaObject {
   $ref?: string;
   [key: string]: any;
 }
-
-/**
- * Generate OpenAPI paths from route definitions
- * @param routes - Array of route definitions
- * @param restMethods - Array of REST method names (excluding GraphQL methods)
- */
 export function generatePathsFromRoutes(routes: any[], restMethods: string[]): Record<string, any> {
   const paths: Record<string, any> = {};
   const restMethodsSet = new Set(restMethods);
-
   for (const route of routes) {
     if (!route?.path || !route?.isEnabled) continue;
-
     const path = route.path;
     const tableName = route.mainTable?.name;
     const publishedMethods = route.publishedMethods || [];
-
-
-    // Determine available methods based on route type
     const availableMethods = new Set<string>();
-    
     if (route.isExpressRoute) {
-      // Routes cứng từ Express - generate methods theo controller definition
       route.handlers.forEach((handler: any) => {
         const method = handler.method?.method;
         if (method && restMethodsSet.has(method)) {
@@ -40,9 +24,7 @@ export function generatePathsFromRoutes(routes: any[], restMethods: string[]): R
         }
       });
     } else {
-      // Routes custom từ DB - chỉ generate methods có handler
       if (route.handlers && Array.isArray(route.handlers) && route.handlers.length > 0) {
-        // Routes custom từ DB - chỉ generate methods có handler
         route.handlers.forEach((handler: any) => {
           const method = handler.method?.method;
           if (method && restMethodsSet.has(method)) {
@@ -50,29 +32,19 @@ export function generatePathsFromRoutes(routes: any[], restMethods: string[]): R
           }
         });
       } else {
-        // Routes DB không có handlers - check if dynamic route (có mainTable)
         if (tableName) {
-          // Routes dynamic (có mainTable) - generate all methods từ method_definition
           restMethods.forEach(method => availableMethods.add(method));
         } else {
-          // Routes custom không có handlers và không có mainTable - chỉ generate GET
           availableMethods.add('GET');
         }
       }
     }
-
-
-    // Kiểm tra methods nào được publish (không cần auth)
     const isPublished = (method: string) => {
       return publishedMethods.some((pm: any) => pm.method === method);
     };
-
-    // Khởi tạo object path
     if (!paths[path]) {
       paths[path] = {};
     }
-
-    // GET - List/Find (chỉ nếu có)
     if (availableMethods.has('GET')) {
       paths[path].get = {
       tags: [getTagName(route)],
@@ -160,8 +132,6 @@ export function generatePathsFromRoutes(routes: any[], restMethods: string[]): R
       security: isPublished('GET') ? [] : [{ bearerAuth: [] }]
       };
     }
-
-    // POST - Create (chỉ nếu có)
     if (availableMethods.has('POST')) {
       paths[path].post = {
       tags: [getTagName(route)],
@@ -191,18 +161,13 @@ export function generatePathsFromRoutes(routes: any[], restMethods: string[]): R
       security: isPublished('POST') ? [] : [{ bearerAuth: [] }]
       };
     }
-
-    // PATCH và DELETE cần parameter :id
     const pathWithId = `${path}/{id}`;
     const hasIdMethods = availableMethods.has('PATCH') || availableMethods.has('DELETE');
-    
     if (hasIdMethods) {
       if (!paths[pathWithId]) {
         paths[pathWithId] = {};
       }
     }
-
-    // PATCH - Update (chỉ nếu có)
     if (availableMethods.has('PATCH')) {
       paths[pathWithId].patch = {
       tags: [getTagName(route)],
@@ -242,8 +207,6 @@ export function generatePathsFromRoutes(routes: any[], restMethods: string[]): R
       security: isPublished('PATCH') ? [] : [{ bearerAuth: [] }]
       };
     }
-
-    // DELETE - Delete (chỉ nếu có)
     if (availableMethods.has('DELETE')) {
       paths[pathWithId].delete = {
       tags: [getTagName(route)],
@@ -282,15 +245,11 @@ export function generatePathsFromRoutes(routes: any[], restMethods: string[]): R
       };
     }
   }
-
   return paths;
 }
-
 function getTagName(route: any): string {
   const path = route.path;
   const tableName = route.mainTable?.name;
-  
-  // Routes Express - dùng tên controller/service
   if (route.isExpressRoute) {
     if (path.startsWith('/auth/')) return 'Authentication';
     if (path.startsWith('/file_definition')) return 'File Management';
@@ -300,19 +259,11 @@ function getTagName(route: any): string {
     if (path.startsWith('/assets/')) return 'Assets';
     return 'System';
   }
-  
-  // Routes DB - dùng tableName hoặc path
   if (tableName) {
     return tableName.replace('_definition', '').replace(/_/g, ' ');
   }
-  
-  // Custom routes - tất cả đều vào tag Custom
   return 'Custom';
 }
-
-/**
- * Tạo common response schemas
- */
 export function generateCommonResponses(): Record<string, any> {
   return {
     BadRequest: {
@@ -349,4 +300,3 @@ export function generateCommonResponses(): Record<string, any> {
     }
   };
 }
-

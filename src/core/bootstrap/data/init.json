@@ -303,8 +303,22 @@
             "isEnabled": true,
             "isSystem": true,
             "icon": "lucide:message-circle"
+        },
+        {
+            "path": "/websocket_definition",
+            "mainTable": "websocket_definition",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:radio-tower"
+        },
+        {
+            "path": "/websocket_event_definition",
+            "mainTable": "websocket_event_definition",
+            "isEnabled": true,
+            "isSystem": true,
+            "icon": "lucide:zap"
         }
-    ], 
+    ],
     "pre_hook_definition": [
         {
             "isEnabled": true,
@@ -486,6 +500,29 @@
                             { "route": "/route_definition", "actions": ["create"] },
                             { "route": "/route_definition", "actions": ["update"] },
                             { "route": "/route_definition", "actions": ["delete"] }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "WebSockets",
+            "icon": "lucide:radio-tower",
+            "path": "/settings/websockets",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "WebSocket gateway and event management",
+            "order": 6,
+            "parent": "Settings",
+            "permission": {
+                "and": [
+                    { "route": "/websocket_definition", "actions": ["read"] },
+                    {
+                        "or": [
+                            { "route": "/websocket_definition", "actions": ["create"] },
+                            { "route": "/websocket_definition", "actions": ["update"] },
+                            { "route": "/websocket_definition", "actions": ["delete"] }
                         ]
                     }
                 ]
@@ -679,6 +716,61 @@
             "description": "Backend packages management",
             "order": 3,
             "parent": "Packages"
+        },
+        {
+            "type": "Dropdown Menu",
+            "label": "WebSocket",
+            "icon": "lucide:radio",
+            "path": "/websocket",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "WebSocket gateways and events",
+            "order": 9,
+            "permission": {
+                "allowAll": true
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "Gateways",
+            "icon": "lucide:radio-tower",
+            "path": "/websocket/gateways",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "WebSocket gateway management",
+            "order": 1,
+            "parent": "WebSocket",
+            "permission": {
+                "allowAll": true
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "Events",
+            "icon": "lucide:zap",
+            "path": "/websocket/events",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "WebSocket event management",
+            "order": 2,
+            "parent": "WebSocket",
+            "permission": {
+                "allowAll": true
+            }
+        },
+        {
+            "type": "Menu",
+            "label": "Test Tool",
+            "icon": "lucide:test-tube",
+            "path": "/websocket/test",
+            "isEnabled": true,
+            "isSystem": true,
+            "description": "WebSocket testing tool",
+            "order": 3,
+            "parent": "WebSocket",
+            "permission": {
+                "allowAll": true
+            }
         }
     ]
 }

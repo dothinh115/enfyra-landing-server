@@ -14,11 +14,9 @@ import { GraphqlService } from '../../graphql/services/graphql.service';
 import { TDynamicContext } from '../../../shared/interfaces/dynamic-context.interface';
 import { IConversation, IConversationCreate, IConversationUpdate } from '../interfaces/conversation.interface';
 import { IMessage, IMessageCreate } from '../interfaces/message.interface';
-
 @Injectable()
 export class ConversationService {
   private readonly logger = new Logger(ConversationService.name);
-
   constructor(
     private readonly queryBuilder: QueryBuilderService,
     private readonly tableHandlerService: TableHandlerService,
@@ -32,7 +30,6 @@ export class ConversationService {
     private readonly swaggerService: SwaggerService,
     private readonly graphqlService: GraphqlService,
   ) {}
-
   private createContext(userId?: string | number): TDynamicContext {
     return {
       $body: {},
@@ -78,7 +75,6 @@ export class ConversationService {
       },
     };
   }
-
   private async createRepository(tableName: string, context: TDynamicContext): Promise<DynamicRepository> {
     const repo = new DynamicRepository({
       context,
@@ -100,93 +96,70 @@ export class ConversationService {
     await repo.init();
     return repo;
   }
-
   async createConversation(params: {
     data: IConversationCreate;
     userId?: string | number;
   }): Promise<IConversation> {
     const { data, userId } = params;
-
     if (!data.title || !data.title.trim()) {
       throw new Error('Title is required for conversation');
     }
-
     if (!data.configId) {
       throw new Error('Config ID is required for conversation');
     }
-
     const context = this.createContext(userId);
     const repo = await this.createRepository('ai_conversation_definition', context);
-
     const createData: any = {
       title: data.title.trim(),
       messageCount: data.messageCount || 0,
       config: { id: data.configId },
     };
-
     if (data.userId || userId) {
       createData.user = { id: data.userId || userId };
     }
-
     if (data.summary) {
       createData.summary = data.summary;
     }
-
     if (data.lastSummaryAt) {
       createData.lastSummaryAt = data.lastSummaryAt;
     }
-
     const result = await repo.create({ data: createData });
-
     if (!result.data || result.data.length === 0) {
       throw new Error('Failed to create conversation');
     }
-
     return this.mapConversation(result.data[0]);
   }
-
   async getConversation(params: {
     id: string | number;
     userId?: string | number;
   }): Promise<IConversation | null> {
     const { id, userId } = params;
-
     const context = this.createContext();
     const repo = await this.createRepository('ai_conversation_definition', context);
-
     const conversationId = typeof id === 'string' && /^\d+$/.test(id) ? parseInt(id, 10) : id;
-
     const result = await repo.find({
       where: {
         id: { _eq: conversationId },
       },
     });
-
     if (!result.data || result.data.length === 0) {
       return null;
     }
-
     const conversation = this.mapConversation(result.data[0]);
-
     if (userId && conversation.userId !== userId) {
       return null;
     }
-
     return conversation;
   }
-
   async updateConversation(params: {
     id: string | number;
     data: Partial<IConversationUpdate>;
     userId?: string | number;
   }): Promise<IConversation> {
     const { id, data, userId } = params;
-
     const context = this.createContext(userId);
     const repo = await this.createRepository('ai_conversation_definition', context);
-
     const conversationId = typeof id === 'string' && /^\d+$/.test(id) ? parseInt(id, 10) : id;
-
     const updateData: any = {};
     if (data.title !== undefined) updateData.title = data.title;
     if (data.messageCount !== undefined) updateData.messageCount = data.messageCount;
@@ -194,24 +167,20 @@ export class ConversationService {
     if (data.lastSummaryAt !== undefined) updateData.lastSummaryAt = data.lastSummaryAt;
     if (data.lastActivityAt !== undefined) updateData.lastActivityAt = data.lastActivityAt;
     if (data.task !== undefined) updateData.task = data.task;
-
     const result = await repo.update({ id: conversationId, data: updateData });
     return this.mapConversation(result.data[0]);
   }
-
   async deleteConversation(params: {
     id: string | number;
     userId?: string | number;
   }): Promise<void> {
     const { id, userId } = params;
-
     const context = this.createContext(userId);
     const repo = await this.createRepository('ai_conversation_definition', context);
     const conversationId = typeof id === 'string' && /^\d+$/.test(id) ? parseInt(id, 10) : id;
     await repo.delete({ id: conversationId });
     this.logger.log(`Deleted conversation ${conversationId}`);
   }
-
   async getMessages(params: {
     conversationId: string | number;
     limit?: number;
@@ -220,56 +189,45 @@ export class ConversationService {
     since?: Date;
   }): Promise<IMessage[]> {
     const { conversationId, limit, userId, sort, since } = params;
-
     const context = this.createContext(userId);
     const repo = await this.createRepository('ai_message_definition', context);
-
     const where: any = {
       conversation: { id: { _eq: conversationId } },
     };
     if (since) {
       where.createdAt = { _gt: since };
     }
-
     const result = await repo.find({
       where,
       fields: 'columns.*',
       limit: limit ?? 0,
       sort: sort || 'sequence',
     });
-
     const messages = result.data || [];
-    
     const mappedMessages = await Promise.all(messages.map((msg: any) => {
-      return this.mapMessage(msg, undefined, false); 
+      return this.mapMessage(msg, undefined, false);
     }));
-    
     return mappedMessages;
   }
-
   async deleteMessage(params: {
     messageId: string | number;
     userId?: string | number;
   }): Promise<void> {
     const { messageId, userId } = params;
-
     const context = this.createContext(userId);
     const repo = await this.createRepository('ai_message_definition', context);
     await repo.delete({ id: messageId });
     this.logger.log(`Deleted message ${messageId}`);
   }
-
   async deleteMessagesBeforeSequence(params: {
     conversationId: string | number;
     beforeSequence: number;
     userId?: string | number;
   }): Promise<void> {
     const { conversationId, beforeSequence, userId } = params;
-
     await this.queryBuilder.transaction(async (trx) => {
       const context = this.createContext(userId);
       const repo = await this.createRepository('ai_message_definition', context);
-
       const result = await repo.find({
         where: {
           conversation: { id: { _eq: conversationId } },
@@ -277,16 +235,13 @@ export class ConversationService {
         },
         fields: 'id',
       });
-
       const messagesToDelete = result.data || [];
       for (const msg of messagesToDelete) {
         await repo.delete({ id: msg.id });
       }
-
       this.logger.log(`Deleted ${messagesToDelete.length} old messages from conversation ${conversationId} (before sequence ${beforeSequence})`);
     });
   }
-
   async updateConversationAndDeleteMessages(params: {
     conversationId: string | number;
     updateData: IConversationUpdate;
@@ -294,21 +249,17 @@ export class ConversationService {
     userId?: string | number;
   }): Promise<IConversation> {
     const { conversationId, updateData, beforeSequence, userId } = params;
-
     return await this.queryBuilder.transaction(async (trx) => {
       const context = this.createContext(userId);
       const conversationRepo = await this.createRepository('ai_conversation_definition', context);
       const messageRepo = await this.createRepository('ai_message_definition', context);
-
       const updateDataAny: any = {};
       if (updateData.title !== undefined) updateDataAny.title = updateData.title;
       if (updateData.messageCount !== undefined) updateDataAny.messageCount = updateData.messageCount;
       if (updateData.summary !== undefined) updateDataAny.summary = updateData.summary;
       if (updateData.lastSummaryAt !== undefined) updateDataAny.lastSummaryAt = updateData.lastSummaryAt;
       if (updateData.lastActivityAt !== undefined) updateDataAny.lastActivityAt = updateData.lastActivityAt;
-
       const updateResult = await conversationRepo.update({ id: conversationId, data: updateDataAny });
-
       const result = await messageRepo.find({
         where: {
           conversation: { id: { _eq: conversationId } },
@@ -316,34 +267,27 @@ export class ConversationService {
         },
         fields: 'id',
       });
-
       const messagesToDelete = result.data || [];
       for (const msg of messagesToDelete) {
         await messageRepo.delete({ id: msg.id });
       }
-
       this.logger.log(`Updated conversation ${conversationId} and deleted ${messagesToDelete.length} old messages (before sequence ${beforeSequence})`);
-
       return this.mapConversation(updateResult.data[0]);
     });
   }
-
   async createMessage(params: {
     data: IMessageCreate;
     userId?: string | number;
     context?: { userMessage?: string; boundTools?: string[]; provider?: string; tokenUsage?: { inputTokens?: number; outputTokens?: number } };
   }): Promise<IMessage> {
     const { data, userId, context } = params;
-
     const dbContext = this.createContext(userId);
     const repo = await this.createRepository('ai_message_definition', dbContext);
-
     const createData: any = {
       conversation: { id: data.conversationId },
       role: data.role,
       sequence: data.sequence,
     };
-
     if (data.content !== undefined && data.content !== null) {
       if (typeof data.content === 'object') {
         createData.content = JSON.stringify(data.content);
@@ -351,54 +295,42 @@ export class ConversationService {
         createData.content = data.content;
       }
     }
-
     if (data.toolCalls) {
       createData.toolCalls = data.toolCalls;
     }
-
     if (data.toolResults) {
       createData.toolResults = data.toolResults;
     }
-
     const result = await repo.create({ data: createData });
-
-    return await this.mapMessage(result.data[0], context, true); 
+    return await this.mapMessage(result.data[0], context, true);
   }
-
   async getLastSequence(params: {
     conversationId: string | number;
     userId?: string | number;
   }): Promise<number> {
     const { conversationId, userId } = params;
-
     const context = this.createContext(userId);
     const repo = await this.createRepository('ai_message_definition', context);
-
     const result = await repo.find({
       where: {
         conversation: { id: { _eq: conversationId } },
       },
       fields: 'sequence',
     });
-
     const messages = result.data || [];
     if (messages.length === 0) {
       return 0;
     }
-
     const sequences = messages.map((msg: any) => msg.sequence);
     return Math.max(...sequences);
   }
-
   async updateMessageCount(params: {
     conversationId: string | number;
     userId?: string | number;
   }): Promise<void> {
     const { conversationId, userId } = params;
-
     const context = this.createContext(userId);
     const repo = await this.createRepository('ai_message_definition', context);
-
     const result = await repo.find({
       where: {
         conversation: { id: { _eq: conversationId } },
@@ -406,16 +338,13 @@ export class ConversationService {
       fields: 'role',
       limit: 0,
     });
-
     const messages = result.data || [];
     const userMessages = messages.filter((msg: any) => msg.role === 'user');
     const assistantMessages = messages.filter((msg: any) => msg.role === 'assistant');
     const messageCount = userMessages.length + assistantMessages.length;
-
     const conversationRepo = await this.createRepository('ai_conversation_definition', context);
     await conversationRepo.update({ id: conversationId, data: { messageCount } });
   }
-
   private mapConversation(data: any): IConversation {
     let task = null;
     if (data.task !== undefined && data.task !== null) {
@@ -429,7 +358,6 @@ export class ConversationService {
         task = data.task;
       }
     }
-
     return {
       id: data.id || data._id,
       userId: data.user?.id || data.user?._id || data.userId,
@@ -444,11 +372,9 @@ export class ConversationService {
       updatedAt: new Date(data.updatedAt),
     };
   }
-
   private async mapMessage(data: any, context?: { userMessage?: string; boundTools?: string[]; provider?: string; tokenUsage?: { inputTokens?: number; outputTokens?: number } }, debug: boolean = false): Promise<IMessage> {
     let toolCalls = null;
     let toolResults = null;
-
     if (data.toolCalls !== undefined && data.toolCalls !== null) {
       if (typeof data.toolCalls === 'string') {
         try {
@@ -460,7 +386,6 @@ export class ConversationService {
         toolCalls = data.toolCalls;
       }
     }
-
     if (data.toolResults !== undefined && data.toolResults !== null) {
       if (typeof data.toolResults === 'string') {
         try {
@@ -472,18 +397,14 @@ export class ConversationService {
         toolResults = data.toolResults;
       }
     }
-
     let content = data.content;
-
     if (typeof content === 'string' && (content.startsWith('{') || content.startsWith('['))) {
       try {
         const parsed = JSON.parse(content);
         content = parsed;
       } catch {
-
       }
     }
-
     const mapped: IMessage = {
       id: data.id || data._id,
       conversationId: data.conversation?.id || data.conversation?._id || data.conversationId,
@@ -494,10 +415,7 @@ export class ConversationService {
       sequence: data.sequence,
       createdAt: new Date(data.createdAt),
     };
-    
-
     if (mapped.role === 'assistant' && debug) {
-
       let userMessage: string | null = context?.userMessage || null;
       if (!userMessage && mapped.conversationId && mapped.sequence !== undefined) {
         try {
@@ -514,37 +432,26 @@ export class ConversationService {
           });
           if (prevUserMsgResult?.data?.[0]?.content) {
             const content = prevUserMsgResult.data[0].content;
-            userMessage = typeof content === 'string' 
-              ? content 
+            userMessage = typeof content === 'string'
+              ? content
               : JSON.stringify(content);
           }
         } catch (e: any) {
-
         }
       }
-
-
       const toolCallsDetails = Array.isArray(mapped.toolCalls) ? mapped.toolCalls.map((tc: any) => {
         const name = tc.function?.name || tc.name;
-
-        // Extract args - handle both string (from LLM) and object (from DB JSONB)
         let args: any = tc.function?.arguments || tc.args || tc.arguments;
-
-        // If no args found at all, default to empty object
         if (args === undefined || args === null) {
           args = {};
         }
-
-        // If args is a string, parse it
         if (typeof args === 'string') {
           try {
             args = JSON.parse(args);
           } catch (e: any) {
-            // If parse fails, keep as string for debugging
             args = { _raw: args.substring(0, 200), _parseError: e.message };
           }
         }
-
         const argsStr = JSON.stringify(args);
         return {
           name,
@@ -553,10 +460,8 @@ export class ConversationService {
           paramsLength: argsStr.length,
         };
       }) : null;
-
       const usedTools = toolCallsDetails ? Array.from(new Set(toolCallsDetails.map((tc: any) => tc.name))) : [];
       const availableTools = context?.boundTools || [];
-      
       const toolResultsSummary = toolResults ? (() => {
         const resultsStr = JSON.stringify(toolResults);
         if (resultsStr.length > 2000) {
@@ -586,9 +491,7 @@ export class ConversationService {
           truncated: false,
         };
       })() : null;
-
       const agentResponse = typeof mapped.content === 'string' ? mapped.content : JSON.stringify(mapped.content || '');
-      
       this.logger.debug(`[mapMessage] Assistant message: ${JSON.stringify({
         id: mapped.id,
         conversationId: mapped.conversationId,
@@ -609,8 +512,6 @@ export class ConversationService {
         createdAt: mapped.createdAt,
       }, null, 2)}`);
     }
-    
     return mapped;
   }
 }
-

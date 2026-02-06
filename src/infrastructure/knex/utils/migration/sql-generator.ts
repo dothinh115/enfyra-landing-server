@@ -1,6 +1,5 @@
 export function generateColumnDefinition(col: any, dbType: 'mysql' | 'postgres' | 'sqlite' = 'mysql'): string {
   let definition = '';
-
   switch (col.type) {
     case 'uuid':
       if (dbType === 'postgres') {
@@ -11,7 +10,6 @@ export function generateColumnDefinition(col: any, dbType: 'mysql' | 'postgres' 
       break;
     case 'int':
       if (col.isPrimary) {
-        // Auto-increment is default for int primary keys
         if (dbType === 'postgres') {
           definition = 'SERIAL';
         } else if (dbType === 'sqlite') {
@@ -20,7 +18,6 @@ export function generateColumnDefinition(col: any, dbType: 'mysql' | 'postgres' 
           definition = 'INT UNSIGNED AUTO_INCREMENT';
         }
       } else {
-        // Regular integer
         if (dbType === 'postgres') {
           definition = 'INTEGER';
         } else if (dbType === 'sqlite') {
@@ -66,7 +63,7 @@ export function generateColumnDefinition(col: any, dbType: 'mysql' | 'postgres' 
       if (dbType === 'postgres') {
         definition = 'BOOLEAN';
       } else if (dbType === 'sqlite') {
-        definition = 'INTEGER'; // SQLite stores boolean as 0/1
+        definition = 'INTEGER';
       } else {
         definition = 'BOOLEAN';
       }
@@ -76,7 +73,7 @@ export function generateColumnDefinition(col: any, dbType: 'mysql' | 'postgres' 
       if (dbType === 'postgres') {
         definition = 'TIMESTAMP';
       } else if (dbType === 'sqlite') {
-        definition = 'TEXT'; // SQLite stores timestamps as TEXT or INTEGER
+        definition = 'TEXT';
       } else {
         definition = 'TIMESTAMP';
       }
@@ -102,7 +99,6 @@ export function generateColumnDefinition(col: any, dbType: 'mysql' | 'postgres' 
       break;
     case 'enum':
       if (dbType === 'postgres' && Array.isArray(col.options)) {
-        // PostgreSQL uses CHECK constraint for enums in this context
         const enumValues = col.options.map(opt => `'${opt}'`).join(', ');
         definition = `VARCHAR(255) CHECK (${col.name} IN (${enumValues}))`;
       } else if (dbType === 'sqlite') {
@@ -117,29 +113,19 @@ export function generateColumnDefinition(col: any, dbType: 'mysql' | 'postgres' 
     default:
       definition = 'VARCHAR(255)';
   }
-
   if (col.isPrimary) {
-    // For int type, auto increment is already handled above (SERIAL, AUTO_INCREMENT)
-    // For uuid type, add PRIMARY KEY constraint
     if (col.type === 'uuid') {
       definition += ' PRIMARY KEY';
     } else if (col.type === 'int' && dbType === 'sqlite') {
-      // SQLite needs explicit PRIMARY KEY AUTOINCREMENT for integer primary keys
       definition += ' PRIMARY KEY AUTOINCREMENT';
     }
-    // For MySQL/PostgreSQL int primary key, AUTO_INCREMENT/SERIAL already implies PRIMARY KEY
   }
-
   if (col.isNullable === false && !col.isPrimary) {
-    // Primary keys are implicitly NOT NULL
     definition += ' NOT NULL';
   }
-
   if (col.defaultValue !== null && col.defaultValue !== undefined) {
     const isBooleanColumn = String(col.type).toLowerCase() === 'boolean';
     let defaultVal = col.defaultValue;
-
-    // Normalize numeric/string 0/1 to boolean when column is boolean
     if (isBooleanColumn) {
       if (typeof defaultVal === 'number') {
         defaultVal = defaultVal === 1;
@@ -149,7 +135,6 @@ export function generateColumnDefinition(col: any, dbType: 'mysql' | 'postgres' 
         else if (trimmed === '0' || trimmed === 'false') defaultVal = false;
       }
     }
-
     if (typeof defaultVal === 'string' && !isBooleanColumn) {
       definition += ` DEFAULT '${defaultVal}'`;
     } else if (typeof defaultVal === 'boolean') {
@@ -162,7 +147,5 @@ export function generateColumnDefinition(col: any, dbType: 'mysql' | 'postgres' 
       definition += ` DEFAULT ${defaultVal}`;
     }
   }
-
   return definition;
 }
-

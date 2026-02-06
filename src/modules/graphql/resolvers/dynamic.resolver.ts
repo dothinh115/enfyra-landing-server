@@ -19,7 +19,6 @@ import { StorageConfigCacheService } from '../../../infrastructure/cache/service
 import { SystemProtectionService } from '../../dynamic-api/services/system-protection.service';
 import { TableValidationService } from '../../dynamic-api/services/table-validation.service';
 import { ScriptErrorFactory } from '../../../shared/utils/script-error-factory';
-
 @Injectable()
 export class DynamicResolver {
   constructor(
@@ -36,7 +35,6 @@ export class DynamicResolver {
     private tableValidationService: TableValidationService,
     private configService: ConfigService,
   ) {}
-
   async dynamicResolver(
     tableName: string,
     args: {
@@ -55,7 +53,6 @@ export class DynamicResolver {
       context,
       info,
     );
-
     const selections = info.fieldNodes?.[0]?.selectionSet?.selections || [];
     const fullFieldPicker = convertFieldNodesToFieldPicker(selections);
     const fieldPicker = fullFieldPicker
@@ -64,7 +61,6 @@ export class DynamicResolver {
     const metaPicker = fullFieldPicker
       .filter((f) => f.startsWith('meta.'))
       .map((f) => f.replace(/^meta\./, ''));
-
     const handlerCtx: any = {
       $throw: ScriptErrorFactory.createThrowHandlers(),
       $helpers: {
@@ -89,15 +85,14 @@ export class DynamicResolver {
         sort: args.sort,
         aggregate: args.aggregate,
       },
-      $user: user ?? null, // Always exists (null if no user)
-      $repos: {}, // Will be populated below
+      $user: user ?? null,
+      $repos: {},
       $req: context.request,
       $body: {},
       $params: {},
       $logs: () => {},
       $share: {},
     };
-
     const dynamicFindEntries = await Promise.all(
       [mainTable, ...targetTables].map(async (table) => {
         const dynamicRepo = new DynamicRepository({
@@ -112,18 +107,13 @@ export class DynamicResolver {
           systemProtectionService: this.systemProtectionService,
           tableValidationService: this.tableValidationService,
         });
-
         await dynamicRepo.init();
-
         const name =
           table.name === mainTable.name ? 'main' : (table.alias ?? table.name);
-
         return [name, dynamicRepo];
       }),
     );
-
     handlerCtx.$repos = Object.fromEntries(dynamicFindEntries);
-
     try {
       const defaultHandler = `return await $ctx.$repos.main.find();`;
       const result = await this.handlerExecutorService.run(
@@ -131,13 +121,11 @@ export class DynamicResolver {
         handlerCtx,
         this.configService.get<number>('DEFAULT_HANDLER_TIMEOUT', 5000),
       );
-
       return result;
     } catch (error) {
       throwGqlError('SCRIPT_ERROR', error.message);
     }
   }
-
   async dynamicMutationResolver(
     mutationName: string,
     args: any,
@@ -149,14 +137,10 @@ export class DynamicResolver {
       if (!match) {
         throw new BadRequestException(`Invalid mutation name: ${mutationName}`);
       }
-
       const operation = match[1];
       const tableName = match[2];
-
       const { matchedRoute: currentRoute, user } = await this.middleware(tableName, context, info);
-
       await this.canPassMutation(currentRoute, context.req?.headers?.authorization);
-
       const handlerCtx = {
         $user: user ?? null,
         $repos: {},
@@ -166,7 +150,6 @@ export class DynamicResolver {
         $logs: () => {},
         $share: {},
       };
-
       const dynamicRepo = new DynamicRepository({
         context: handlerCtx,
         tableName: tableName,
@@ -179,9 +162,7 @@ export class DynamicResolver {
         systemProtectionService: this.systemProtectionService,
         tableValidationService: this.tableValidationService,
       });
-
       await dynamicRepo.init();
-
       const dynamicFindEntries = [
         ['main', dynamicRepo],
         ...(currentRoute.targetTables || []).map((table: any) => [
@@ -200,13 +181,10 @@ export class DynamicResolver {
           }),
         ]),
       ];
-
       for (const [, repo] of dynamicFindEntries) {
         await (repo as DynamicRepository).init();
       }
-
       handlerCtx.$repos = Object.fromEntries(dynamicFindEntries);
-
       let defaultHandler: string;
       switch (operation) {
         case 'create':
@@ -221,47 +199,34 @@ export class DynamicResolver {
         default:
           throw new BadRequestException(`Unsupported operation: ${operation}`);
       }
-
       const result = await this.handlerExecutorService.run(
         defaultHandler,
         handlerCtx,
         this.configService.get<number>('DEFAULT_HANDLER_TIMEOUT', 5000),
       );
-      
-      // Extract data from result format like { data: [...] }
       if (result && result.data && Array.isArray(result.data)) {
         return result.data[0];
       }
-      
       return result;
     } catch (error) {
       throwGqlError('MUTATION_ERROR', error.message);
     }
   }
-
   private async middleware(mainTableName: string, context: any, info: any) {
     if (!mainTableName) {
       throwGqlError('400', 'Missing table name');
     }
-
-    // Use RouteEngine for O(log N) matching instead of O(N) linear search
     const routeEngine = this.routeCacheService.getRouteEngine();
-    const operation = info.operation.operation; // 'query' or 'mutation'
+    const operation = info.operation.operation;
     const method = operation === 'query' ? 'GQL_QUERY' : 'GQL_MUTATION';
-
     const matchResult = routeEngine.find(method, `/${mainTableName}`);
-
     if (!matchResult) {
       throwGqlError('404', 'Route not found');
     }
-
     const currentRoute = matchResult.route;
-
     const accessToken =
       context.request?.headers?.get('authorization')?.split('Bearer ')[1] || '';
-
     const user = await this.canPass(currentRoute, accessToken);
-
     return {
       matchedRoute: currentRoute,
       user,
@@ -269,38 +234,29 @@ export class DynamicResolver {
       targetTables: currentRoute.targetTables,
     };
   }
-
   private async canPass(currentRoute: any, accessToken: string) {
     if (!currentRoute?.isEnabled) {
       throwGqlError('404', 'NotFound');
     }
-
     const isPublished = currentRoute.publishedMethods.some(
       (item: any) => item.method === 'GQL_QUERY',
     );
-
     if (isPublished) {
       return { isAnonymous: true };
     }
-
     let decoded;
     try {
       decoded = this.jwtService.verify(accessToken);
     } catch {
       throwGqlError('401', 'Unauthorized');
     }
-
     const user = await this.queryBuilder.findOneWhere('user_definition', { id: decoded.id });
-
     if (!user) {
       throwGqlError('401', 'Invalid user');
     }
-
-    // Load role if needed
     if (user.roleId) {
       user.role = await this.queryBuilder.findOneWhere('role_definition', { id: user.roleId });
     }
-
     const canPass =
       user.isRootAdmin ||
       currentRoute.routePermissions?.some(
@@ -308,45 +264,34 @@ export class DynamicResolver {
           permission.role?.id === user.role?.id &&
           permission.methods?.includes('GQL_QUERY'),
       );
-
     if (!canPass) {
       throwGqlError('403', 'Not allowed');
     }
-
     return user;
   }
-
   private async canPassMutation(currentRoute: any, accessToken: string) {
     if (!currentRoute?.isEnabled) {
       throwGqlError('404', 'NotFound');
     }
-
     const isPublished = currentRoute.publishedMethods.some(
       (item: any) => item.method === 'GQL_MUTATION',
     );
-
     if (isPublished) {
       return { isAnonymous: true };
     }
-
     let decoded;
     try {
       decoded = this.jwtService.verify(accessToken);
     } catch {
       throwGqlError('401', 'Unauthorized');
     }
-
     const user = await this.queryBuilder.findOneWhere('user_definition', { id: decoded.id });
-
     if (!user) {
       throwGqlError('401', 'Invalid user');
     }
-
-    // Load role if needed
     if (user.roleId) {
       user.role = await this.queryBuilder.findOneWhere('role_definition', { id: user.roleId });
     }
-
     const canPass =
       user.isRootAdmin ||
       currentRoute.routePermissions?.some(
@@ -354,11 +299,9 @@ export class DynamicResolver {
           permission.role?.id === user.role?.id &&
           permission.methods?.includes('GQL_MUTATION'),
       );
-
     if (!canPass) {
       throwGqlError('403', 'Not allowed');
     }
-
     return user;
   }
 }

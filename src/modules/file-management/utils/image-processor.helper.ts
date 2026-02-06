@@ -1,6 +1,5 @@
 import * as sharp from 'sharp';
 import * as path from 'path';
-
 export class ImageProcessorHelper {
   static createProcessor(
     input: Buffer | string,
@@ -18,7 +17,6 @@ export class ImageProcessorHelper {
       .rotate()
       .withMetadata();
   }
-
   static createStreamProcessor(options?: {
     failOnError?: boolean;
     density?: number;
@@ -32,7 +30,6 @@ export class ImageProcessorHelper {
       .rotate()
       .withMetadata();
   }
-
   static applyResize(
     processor: sharp.Sharp,
     width?: number,
@@ -41,7 +38,6 @@ export class ImageProcessorHelper {
     gravity?: string,
   ): sharp.Sharp {
     if (!width && !height) return processor;
-
     const fitMap: { [key: string]: 'cover' | 'contain' | 'fill' | 'inside' | 'outside' } = {
       cover: 'cover',
       contain: 'contain',
@@ -49,7 +45,6 @@ export class ImageProcessorHelper {
       inside: 'inside',
       outside: 'outside',
     };
-
     const gravityMap: { [key: string]: sharp.Gravity } = {
       center: 'center',
       north: 'north',
@@ -64,20 +59,16 @@ export class ImageProcessorHelper {
       faces: 'attention',
       auto: 'attention',
     };
-
     const resizeOptions: sharp.ResizeOptions = {
       fit: fitMap[fit?.toLowerCase() || ''] || 'inside',
       withoutEnlargement: true,
       fastShrinkOnLoad: true,
     };
-
     if (gravity && gravityMap[gravity.toLowerCase()]) {
       resizeOptions.position = gravityMap[gravity.toLowerCase()];
     }
-
     return processor.resize(width, height, resizeOptions);
   }
-
   static setImageFormat(
     processor: sharp.Sharp,
     format: string,
@@ -110,7 +101,6 @@ export class ImageProcessorHelper {
     };
     return formatMap[format]?.() || processor;
   }
-
   static validateImageParams(
     width?: number,
     height?: number,
@@ -124,7 +114,6 @@ export class ImageProcessorHelper {
       return { valid: false, error: 'Quality 1-100' };
     return { valid: true };
   }
-
   static validateFormat(format: string): { valid: boolean; error?: string } {
     const supportedFormats = ['jpeg', 'jpg', 'png', 'webp', 'avif', 'gif'];
     if (!supportedFormats.includes(format.toLowerCase())) {
@@ -135,7 +124,6 @@ export class ImageProcessorHelper {
     }
     return { valid: true };
   }
-
   static applyTransformations(
     processor: sharp.Sharp,
     rotate?: number,
@@ -146,7 +134,6 @@ export class ImageProcessorHelper {
     if (rotate !== undefined && rotate !== 0) {
       processor = processor.rotate(rotate);
     }
-
     if (flip) {
       const flipLower = flip.toLowerCase();
       if (flipLower === 'horizontal' || flipLower === 'h') {
@@ -155,18 +142,14 @@ export class ImageProcessorHelper {
         processor = processor.flop();
       }
     }
-
     if (blur !== undefined && blur > 0) {
       processor = processor.blur(blur);
     }
-
     if (sharpen !== undefined && sharpen > 0) {
       processor = processor.sharpen(sharpen);
     }
-
     return processor;
   }
-
   static applyEffects(
     processor: sharp.Sharp,
     brightness?: number,
@@ -175,33 +158,20 @@ export class ImageProcessorHelper {
     grayscale?: boolean,
   ): sharp.Sharp {
     const modulateOptions: { brightness?: number; saturation?: number } = {};
-
     if (brightness !== undefined) {
-      modulateOptions.brightness = brightness / 100 + 1; // Convert -100 to 100 to 0 to 2
+      modulateOptions.brightness = brightness / 100 + 1;
     }
-
     if (saturation !== undefined) {
-      modulateOptions.saturation = saturation / 100 + 1; // Convert -100 to 100 to 0 to 2
+      modulateOptions.saturation = saturation / 100 + 1;
     }
-
     if (Object.keys(modulateOptions).length > 0) {
       processor = processor.modulate(modulateOptions);
     }
-
-    // Note: Sharp doesn't have direct contrast support
-    // Contrast can be simulated with brightness adjustment, but it's not accurate
-    // For now, we'll skip contrast implementation
-    // if (contrast !== undefined) {
-    //   // Contrast simulation would require more complex processing
-    // }
-
     if (grayscale === true) {
       processor = processor.greyscale();
     }
-
     return processor;
   }
-
   static validateTransformParams(
     rotate?: number,
     flip?: string,
@@ -227,13 +197,11 @@ export class ImageProcessorHelper {
       return { valid: false, error: 'Saturation -100 to 100' };
     return { valid: true };
   }
-
   static validateFit(fit?: string): { valid: boolean; error?: string } {
     if (fit && !['cover', 'contain', 'fill', 'inside', 'outside'].includes(fit.toLowerCase()))
       return { valid: false, error: 'Fit: cover, contain, fill, inside, outside' };
     return { valid: true };
   }
-
   static validateGravity(gravity?: string): { valid: boolean; error?: string } {
     const validGravities = [
       'center', 'north', 'south', 'east', 'west',
@@ -244,11 +212,9 @@ export class ImageProcessorHelper {
       return { valid: false, error: `Gravity: ${validGravities.join(', ')}` };
     return { valid: true };
   }
-
   static configureSharp(): void {
     sharp.cache(false);
     sharp.concurrency(8);
     sharp.simd(true);
   }
 }
-
