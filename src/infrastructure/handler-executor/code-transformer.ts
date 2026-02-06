@@ -15,6 +15,7 @@ const MAPPINGS: Record<string, string> = {
   '@API': '$ctx.$api',
   '@UPLOADED_FILE': '$ctx.$uploadedFile',
   '@PKGS': '$ctx.$pkgs',
+  '@SOCKET': '$ctx.$socket',
   '@THROW400': "$ctx.$throw['400']",
   '@THROW401': "$ctx.$throw['401']",
   '@THROW403': "$ctx.$throw['403']",

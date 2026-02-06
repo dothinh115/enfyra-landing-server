@@ -200,6 +200,7 @@ process.on('message', async (msg: any) => {
     ctx.$helpers = buildFunctionProxy('$helpers');
     ctx.$logs = buildCallableFunctionProxy('$logs');
     ctx.$cache = buildFunctionProxy('$cache');
+    ctx.$socket = buildFunctionProxy('$socket');
 
     if (ctx.$res) {
       ctx.$res = buildResponseProxy();

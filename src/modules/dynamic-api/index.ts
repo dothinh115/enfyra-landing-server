@@ -1,4 +1,3 @@
-// Dynamic API module barrel export
 export * from './dynamic.module';
 export * from './controllers/dynamic.controller';
 export * from './services/dynamic.service';

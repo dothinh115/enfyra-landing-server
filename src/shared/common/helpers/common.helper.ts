@@ -1,17 +1,13 @@
 import { DBToTSTypeMap, TSToDBTypeMap } from '../../utils/types/common.type';
-
 export function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
-
 export function lowerFirst(str: string): string {
   return str.charAt(0).toLowerCase() + str.slice(1);
 }
-
 export function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
 export function dbTypeToTSType(dbType: string): string {
   const map: Partial<DBToTSTypeMap> = {
     int: 'number',
@@ -38,7 +34,6 @@ export function dbTypeToTSType(dbType: string): string {
   };
   return map[dbType.toLowerCase()] ?? 'any';
 }
-
 export function tsTypeToDBType(tsType: string): string {
   const map: Partial<TSToDBTypeMap> = {
     number: 'int',
@@ -49,7 +44,6 @@ export function tsTypeToDBType(tsType: string): string {
   };
   return map[tsType] ?? 'text';
 }
-
 export function mapToGraphQLType(dbType: string): string {
   const map: Record<string, string> = {
     int: 'Number',
@@ -67,7 +61,6 @@ export function mapToGraphQLType(dbType: string): string {
   };
   return map[dbType] || 'String';
 }
-
 export function inverseRelationType(type: string): string {
   const map: Record<string, string> = {
     'many-to-one': 'one-to-many',
@@ -77,33 +70,24 @@ export function inverseRelationType(type: string): string {
   };
   return map[type] || 'many-to-one';
 }
-
 export function assertNoSystemFlagDeep(arr: any[], path = 'root') {
   if (!Array.isArray(arr)) return;
-
   for (let i = 0; i < arr.length; i++) {
     const item = arr[i];
     const currentPath = `${path}[${i}]`;
-
-    // 🚨 If it's a new record (no id) and isSystem = true → throw error
     if (!item?.id && item?.isSystem === true) {
       throw new Error(
         `Cannot create new ${currentPath} with isSystem = true`,
       );
     }
-
-    // Continue checking nested objects
     assertNoSystemFlagDeepRecursive(item, currentPath);
   }
 }
-
 export function assertNoSystemFlagDeepRecursive(obj: any, path = 'root') {
   if (!obj || typeof obj !== 'object') return;
-
   for (const key of Object.keys(obj)) {
     const val = obj[key];
     const currentPath = `${path}.${key}`;
-
     if (Array.isArray(val)) {
       assertNoSystemFlagDeep(val, currentPath);
     } else if (typeof val === 'object') {
@@ -111,42 +95,29 @@ export function assertNoSystemFlagDeepRecursive(obj: any, path = 'root') {
     }
   }
 }
-
 export function parseRouteParams(routePath: string): string[] {
   if (!routePath) return [];
-
   const paramRegex = /:([^\/\?]+)/g;
   const params: string[] = [];
   let execResult: RegExpExecArray | null;
-
   while ((execResult = paramRegex.exec(routePath)) !== null) {
-    const paramName = execResult[1].replace('?', ''); // Remove optional marker
+    const paramName = execResult[1].replace('?', '');
     if (!params.includes(paramName)) {
       params.push(paramName);
     }
   }
-
   return params;
 }
-
 export function normalizeRoutePath(routePath: string): string {
   if (!routePath) return '/';
-
-  // Ensure starts with /
   let normalized = routePath.startsWith('/') ? routePath : `/${routePath}`;
-
-  // Remove trailing slash unless it's root
   if (normalized.length > 1 && normalized.endsWith('/')) {
     normalized = normalized.slice(0, -1);
   }
-
   return normalized;
 }
-
 export function validateIdentifier(identifier: string): boolean {
   if (!identifier || typeof identifier !== 'string') return false;
-
-  // Check for SQL injection patterns
   const dangerousPatterns = [
     /drop\s+table/i,
     /delete\s+from/i,
@@ -154,16 +125,13 @@ export function validateIdentifier(identifier: string): boolean {
     /update\s+.+\s+set/i,
     /create\s+table/i,
     /alter\s+table/i,
-    /;\s*$/i, // Trailing semicolon
-    /--\s*$/i, // SQL comment
-    /\/\*.*\*\//i, // SQL comment block
+    /;\s*$/i,
+    /--\s*$/i,
+    /\/\*.*\*\//
   ];
-
   for (const pattern of dangerousPatterns) {
     if (pattern.test(identifier)) return false;
   }
-
-  // Check for reserved keywords
   const reservedKeywords = [
     'select',
     'from',
@@ -222,18 +190,12 @@ export function validateIdentifier(identifier: string): boolean {
     'offset',
     'fetch',
   ];
-
   if (reservedKeywords.includes(identifier.toLowerCase())) return false;
-
-  // Check for valid identifier pattern
   const validPattern = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
   return validPattern.test(identifier);
 }
-
 export function sanitizeInput(input: string): string {
   if (!input || typeof input !== 'string') return '';
-
-  // Remove SQL injection patterns
   let sanitized = input
     .replace(/drop\s+table/gi, '')
     .replace(/delete\s+from/gi, '')
@@ -241,16 +203,13 @@ export function sanitizeInput(input: string): string {
     .replace(/update\s+.+\s+set/gi, '')
     .replace(/create\s+table/gi, '')
     .replace(/alter\s+table/gi, '')
-    .replace(/;\s*$/g, '') // Remove trailing semicolon
-    .replace(/--\s*$/g, '') // Remove SQL comment
-    .replace(/\/\*.*?\*\//g, '') // Remove SQL comment block
+    .replace(/;\s*$/g, '')
+    .replace(/--\s*$/g, '')
+    .replace(/\/\*.*?\*\//g, '')
     .replace(/union\s+select/gi, '')
     .replace(/exec\s*\(/gi, '')
     .replace(/execute\s*\(/gi, '')
-    .replace(/;/g, ''); // Remove all semicolons
-
-  // Remove potentially dangerous characters
+    .replace(/;/g, '');
   sanitized = sanitized.replace(/[<>'"]/g, '');
-
   return sanitized.trim();
 }

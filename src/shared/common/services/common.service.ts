@@ -1,9 +1,5 @@
-// @nestjs packages
 import { Injectable } from '@nestjs/common';
-
-// Import helper functions
 import * as CommonHelper from '../helpers/common.helper';
-
 @Injectable()
 export class CommonService {
   capitalize = CommonHelper.capitalize;

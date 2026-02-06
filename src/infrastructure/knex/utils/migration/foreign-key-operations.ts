@@ -5,9 +5,7 @@ import {
   getForeignKeyConstraintsQuery,
   generateDropForeignKeySQL,
 } from './sql-dialect';
-
 const logger = new Logger('ForeignKeyOperations');
-
 export async function dropForeignKeyIfExists(
   knex: Knex,
   tableName: string,
@@ -16,13 +14,9 @@ export async function dropForeignKeyIfExists(
 ): Promise<void> {
   try {
     logger.log(`Querying FK constraints for table: ${tableName}, column: ${columnName}`);
-
     const { query, bindings } = getForeignKeyConstraintsQuery(tableName, columnName, dbType);
     const fkConstraints = await knex.raw(query, bindings);
-
     let constraintName: string | null = null;
-
-    // Parse results based on DB type
     if (dbType === 'mysql') {
       if (fkConstraints[0] && fkConstraints[0].length > 0) {
         constraintName = fkConstraints[0][0].CONSTRAINT_NAME;
@@ -32,14 +26,11 @@ export async function dropForeignKeyIfExists(
         constraintName = fkConstraints.rows[0].constraint_name;
       }
     } else if (dbType === 'sqlite') {
-      // SQLite PRAGMA returns different structure
       if (fkConstraints && fkConstraints.length > 0) {
-        // SQLite doesn't support named FK constraints easily
         logger.log(`SQLite FK drop requires table recreation`);
         return;
       }
     }
-
     if (constraintName) {
       logger.log(`Found FK constraint: ${constraintName}`);
       const dropSQL = generateDropForeignKeySQL(tableName, constraintName, dbType);
@@ -52,20 +43,15 @@ export async function dropForeignKeyIfExists(
     logger.log(`Error checking/dropping FK constraint for ${columnName}: ${error.message}`);
   }
 }
-
 export async function dropAllForeignKeysReferencingTable(
   knex: Knex,
   targetTableName: string,
   dbType: 'mysql' | 'postgres' | 'sqlite',
 ): Promise<void> {
   logger.log(`Checking for FK constraints referencing table: ${targetTableName}`);
-
   const { query, bindings } = getAllForeignKeyConstraintsReferencingTableQuery(targetTableName, dbType);
   const fkConstraints = await knex.raw(query, bindings);
-
   let constraints: any[] = [];
-
-  // Parse results based on DB type
   if (dbType === 'mysql') {
     constraints = fkConstraints[0] || [];
   } else if (dbType === 'postgres') {
@@ -74,17 +60,13 @@ export async function dropAllForeignKeysReferencingTable(
     logger.log(`SQLite does not support querying all FKs referencing a table`);
     return;
   }
-
   if (constraints.length > 0) {
     logger.log(`Found ${constraints.length} FK constraint(s) referencing ${targetTableName}`);
-
     for (const fk of constraints) {
       const tableName = dbType === 'mysql' ? fk.TABLE_NAME : fk.table_name;
       const constraintName = dbType === 'mysql' ? fk.CONSTRAINT_NAME : fk.constraint_name;
       const columnName = dbType === 'mysql' ? fk.COLUMN_NAME : fk.column_name;
-
       logger.log(`   Dropping FK: ${constraintName} from ${tableName}.${columnName}`);
-
       const dropSQL = generateDropForeignKeySQL(tableName, constraintName, dbType);
       await knex.raw(dropSQL);
       logger.log(`  Dropped FK constraint: ${constraintName}`);
@@ -93,7 +75,6 @@ export async function dropAllForeignKeysReferencingTable(
     logger.log(`No FK constraints reference ${targetTableName}`);
   }
 }
-
 export function generateForeignKeySQL(
   tableName: string,
   columnName: string,
@@ -108,7 +89,6 @@ export function generateForeignKeySQL(
   const fkName = `fk_${tableName}_${columnName}`;
   return `ALTER TABLE ${qt(tableName)} ADD CONSTRAINT ${qt(fkName)} FOREIGN KEY (${qt(columnName)}) REFERENCES ${qt(targetTable)} (${qt(targetColumn)}) ON DELETE ${onDeleteAction} ON UPDATE CASCADE`;
 }
-
 function getAllForeignKeyConstraintsReferencingTableQuery(
   tableName: string,
   dbType: 'mysql' | 'postgres' | 'sqlite',

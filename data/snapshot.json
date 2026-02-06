@@ -460,5 +460,42 @@
                 { "name": "description", "type": "text", "isNullable": true, "isSystem": true, "description": "Description of the AI configuration" }
             ],
             "relations": []
+    },
+    "websocket_definition": {
+        "name": "websocket_definition",
+        "description": "Defines WebSocket gateway namespaces for real-time communication",
+        "isSystem": true,
+        "uniques": [["path"]],
+        "columns": [
+            { "name": "id", "type": "int", "isPrimary": true, "isGenerated": true, "isNullable": false, "isSystem": true, "description": "Primary key identifier" },
+            { "name": "path", "type": "varchar", "isNullable": false, "isSystem": true, "defaultValue": null, "description": "WebSocket namespace path with pattern support (e.g., /chat/:roomId)" },
+            { "name": "isEnabled", "type": "boolean", "isNullable": false, "isSystem": true, "defaultValue": true, "description": "Whether the gateway is active" },
+            { "name": "isSystem", "type": "boolean", "isNullable": false, "isSystem": true, "defaultValue": false, "description": "Whether this is a system-defined gateway" },
+            { "name": "description", "type": "text", "isSystem": true, "description": "Description of the gateway's purpose" },
+            { "name": "requireAuth", "type": "boolean", "isNullable": false, "isSystem": true, "defaultValue": true, "description": "Whether authentication is required for connections" },
+            { "name": "connectionHandlerScript", "type": "code", "isNullable": true, "isSystem": true, "description": "JavaScript code to execute when client connects" },
+            { "name": "connectionHandlerTimeout", "type": "int", "isSystem": true, "isNullable": true, "description": "Timeout in milliseconds for connection handler execution. If not set, uses default system timeout." }
+        ],
+        "relations": [
+            { "propertyName": "targetTables", "type": "many-to-many", "targetTable": "table_definition", "isSystem": true, "description": "Tables that this websocket gateway can access in handlers" }
+        ]
+    },
+    "websocket_event_definition": {
+        "name": "websocket_event_definition",
+        "description": "Defines event handlers for WebSocket gateways",
+        "isSystem": true,
+        "uniques": [["gateway", "eventName"]],
+        "columns": [
+            { "name": "id", "type": "int", "isPrimary": true, "isGenerated": true, "isNullable": false, "isSystem": true, "description": "Primary key identifier" },
+            { "name": "eventName", "type": "varchar", "isNullable": false, "isSystem": true, "defaultValue": null, "description": "Event name to listen for (e.g., sendMessage, typing)" },
+            { "name": "isEnabled", "type": "boolean", "isNullable": false, "isSystem": true, "defaultValue": true, "description": "Whether the event handler is active" },
+            { "name": "isSystem", "type": "boolean", "isNullable": false, "isSystem": true, "defaultValue": false, "description": "Whether this is a system-defined event" },
+            { "name": "description", "type": "text", "isSystem": true, "description": "Description of what the event does" },
+            { "name": "handlerScript", "type": "code", "isSystem": true, "description": "JavaScript code to execute when event is received" },
+            { "name": "timeout", "type": "int", "isSystem": true, "isNullable": true, "description": "Timeout in milliseconds for event handler execution. If not set, uses default system timeout." }
+        ],
+        "relations": [
+            { "propertyName": "gateway", "type": "many-to-one", "targetTable": "websocket_definition", "isSystem": true, "inversePropertyName": "events", "isNullable": false, "description": "Gateway this event belongs to" }
+        ]
     }
 }

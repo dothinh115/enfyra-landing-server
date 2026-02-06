@@ -4,24 +4,18 @@ import { resolvePath } from './resolve-path';
 import { ErrorHandler } from './error-handler';
 import { ScriptTimeoutException } from '../../../core/exceptions/custom-exceptions';
 import { smartMergeContext } from './smart-merge';
-
 export class ChildProcessManager {
   private static readonly logger = new Logger(ChildProcessManager.name);
-
   private static deserializeBuffers(obj: any): any {
     if (obj === null || obj === undefined) {
       return obj;
     }
-
-    // Handle serialized Buffer: { type: 'Buffer', data: [...] }
     if (obj && typeof obj === 'object' && obj.type === 'Buffer' && Array.isArray(obj.data)) {
       return Buffer.from(obj.data);
     }
-
     if (Array.isArray(obj)) {
       return obj.map(item => this.deserializeBuffers(item));
     }
-
     if (obj && typeof obj === 'object' && obj.constructor === Object) {
       const deserialized: any = {};
       for (const key in obj) {
@@ -29,10 +23,8 @@ export class ChildProcessManager {
       }
       return deserialized;
     }
-
     return obj;
   }
-
   static setupTimeout(
     child: any,
     timeoutMs: number,
@@ -45,19 +37,15 @@ export class ChildProcessManager {
       if (isDone.value) return;
       isDone.value = true;
       child.removeAllListeners();
-
       child.kill('SIGKILL');
-
       try {
         await pool.destroy(child);
       } catch (e) {
         this.logger.warn('Failed to destroy child on timeout', e);
       }
-
       reject(new ScriptTimeoutException(timeoutMs, code));
     }, timeoutMs);
   }
-
   static setupChildProcessListeners(
     child: any,
     ctx: TDynamicContext,
@@ -69,21 +57,17 @@ export class ChildProcessManager {
     code: string,
   ): void {
     const activeStreams = new Map<string, { started: boolean }>();
-
     let stderrOutput = '';
     if (child.stderr) {
       child.stderr.on('data', (data: Buffer) => {
         stderrOutput += data.toString();
       });
     }
-
     child.on('message', async (msg: any) => {
       if (isDone.value) return;
-
       if (msg.type === 'stream_start') {
         const { callId, options } = msg;
         activeStreams.set(callId, { started: true });
-
         const res = ctx.$res;
         if (!res) {
           child.send({
@@ -94,48 +78,38 @@ export class ChildProcessManager {
           });
           return;
         }
-
         if (options.mimetype) {
           res.setHeader('Content-Type', options.mimetype);
         }
         if (options.filename) {
           res.setHeader('Content-Disposition', `attachment; filename="${options.filename}"`);
         }
-
         return;
       }
-
       if (msg.type === 'stream_chunk') {
         const { callId, chunk } = msg;
         const streamInfo = activeStreams.get(callId);
         if (!streamInfo) return;
-
         const res = ctx.$res;
         if (!res) return;
-
         let buffer: Buffer;
         if (chunk && chunk.type === 'Buffer' && Array.isArray(chunk.data)) {
           buffer = Buffer.from(chunk.data);
         } else {
           buffer = Buffer.from(chunk);
         }
-
         res.write(buffer);
         return;
       }
-
       if (msg.type === 'stream_end') {
         const { callId } = msg;
         const streamInfo = activeStreams.get(callId);
         if (!streamInfo) return;
-
         const res = ctx.$res;
         if (res) {
           res.end();
         }
-
         activeStreams.delete(callId);
-
         if (!child.killed && child.connected) {
           child.send({
             type: 'call_result',
@@ -145,16 +119,13 @@ export class ChildProcessManager {
         }
         return;
       }
-
       if (msg.type === 'stream_error') {
         const { callId, error } = msg;
         activeStreams.delete(callId);
-
         const res = ctx.$res;
         if (res && !res.headersSent) {
           res.status(500).json({ error: error.message });
         }
-
         if (!child.killed && child.connected) {
           child.send({
             type: 'call_result',
@@ -165,7 +136,6 @@ export class ChildProcessManager {
         }
         return;
       }
-
       if (msg.type === 'call') {
         if (msg.path.includes('$throw')) {
           const error = ErrorHandler.createException(
@@ -176,9 +146,34 @@ export class ChildProcessManager {
           );
           reject(error);
         }
+        if (msg.path.startsWith('$socket.')) {
+          try {
+            const method = msg.path.substring(8);
+            const socketProxy = ctx.$socket as any;
+            if (socketProxy && typeof socketProxy[method] === 'function') {
+              await socketProxy[method](...msg.args);
+            }
+            if (!child.killed && child.connected) {
+              child.send({
+                type: 'call_result',
+                callId: msg.callId,
+                result: undefined,
+              });
+            }
+          } catch (err) {
+            if (!child.killed && child.connected) {
+              child.send({
+                type: 'call_result',
+                callId: msg.callId,
+                error: true,
+                errorResponse: { message: err.message },
+              });
+            }
+          }
+          return;
+        }
         try {
           const { parent, method } = resolvePath(ctx, msg.path);
-
           if (typeof parent[method] !== 'function') {
             if (!child.killed && child.connected) {
               child.send({
@@ -193,7 +188,6 @@ export class ChildProcessManager {
             }
             return;
           }
-
           const reconstructedArgs = msg.args.map((arg: any) => {
             if (arg && typeof arg === 'object' && arg.type === 'Buffer' && Array.isArray(arg.data)) {
               return Buffer.from(arg.data);
@@ -211,14 +205,11 @@ export class ChildProcessManager {
             }
             return arg;
           });
-
           const result = await parent[method](...reconstructedArgs);
-
           let safeResult = result;
           if (msg.path.startsWith('$res.')) {
             safeResult = undefined;
           }
-
           if (!child.killed && child.connected) {
             child.send({
               type: 'call_result',
@@ -237,39 +228,31 @@ export class ChildProcessManager {
           }
         }
       }
-
       if (msg.type === 'done') {
         isDone.value = true;
         child.removeAllListeners();
-
         if (msg.ctx) {
           const mergedCtx = smartMergeContext(ctx, msg.ctx);
           Object.assign(ctx, mergedCtx);
         }
-
         clearTimeout(timeout);
         await pool.release(child);
-        
         const deserializedData = this.deserializeBuffers(msg.data);
         resolve(deserializedData);
       }
-
       if (msg.type === 'error') {
         const simpleMessage = msg.error.message;
-
         const errorDetails: any = {
           type: msg.error.name || 'Error',
           message: msg.error.message,
           statusCode: msg.error.statusCode,
         };
-
         if (msg.error.errorLine && msg.error.codeContextArray) {
           errorDetails.location = {
             line: msg.error.errorLine,
           };
           errorDetails.code = msg.error.codeContextArray;
         }
-
         const error = ErrorHandler.createException(
           undefined,
           msg.error.statusCode,
@@ -277,7 +260,6 @@ export class ChildProcessManager {
           code,
           errorDetails,
         );
-
         ErrorHandler.handleChildError(
           isDone,
           child,
@@ -292,18 +274,14 @@ export class ChildProcessManager {
         );
       }
     });
-
     child.once('exit', async (exitCode: number, signal: string) => {
       if (isDone.value) return;
-
       let errorMessage = `Child process exited with code ${exitCode}, signal ${signal}`;
       const errorDetails: any = { exitCode, signal };
-
       if (stderrOutput) {
         const syntaxErrorMatch = stderrOutput.match(/SyntaxError: (.+)/);
         const referenceErrorMatch = stderrOutput.match(/ReferenceError: (.+)/);
         const typeErrorMatch = stderrOutput.match(/TypeError: (.+)/);
-
         if (syntaxErrorMatch) {
           errorMessage = syntaxErrorMatch[1];
           errorDetails.type = 'SyntaxError';
@@ -314,10 +292,8 @@ export class ChildProcessManager {
           errorMessage = typeErrorMatch[1];
           errorDetails.type = 'TypeError';
         }
-
         errorDetails.stderr = stderrOutput;
       }
-
       const error = ErrorHandler.createException(
         undefined,
         undefined,
@@ -325,7 +301,6 @@ export class ChildProcessManager {
         code,
         errorDetails,
       );
-
       ErrorHandler.handleChildError(
         isDone,
         child,
@@ -339,7 +314,6 @@ export class ChildProcessManager {
         errorDetails,
       );
     });
-
     child.once('error', async (err: any) => {
       const error = ErrorHandler.createException(
         undefined,
@@ -348,7 +322,6 @@ export class ChildProcessManager {
         code,
         { originalError: err },
       );
-
       ErrorHandler.handleChildError(
         isDone,
         child,
@@ -363,7 +336,6 @@ export class ChildProcessManager {
       );
     });
   }
-
   static sendExecuteMessage(
     child: any,
     ctx: TDynamicContext,

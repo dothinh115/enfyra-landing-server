@@ -103,6 +103,23 @@ export function wrapCtx(
       continue;
     }
 
+    if (key === '$socket') {
+      wrapped[key] = {};
+      const socketMethods = ['emit', 'join', 'leave', 'to', 'close'];
+      for (const method of socketMethods) {
+        if (typeof val[method] === 'function') {
+          wrapped[key][method] = {
+            __type: 'function',
+            path: [...path, key, method].join('.'),
+          };
+        }
+      }
+      if (val.rooms && val.rooms instanceof Set) {
+        wrapped[key].rooms = Array.from(val.rooms);
+      }
+      continue;
+    }
+
     if (typeof val === 'function') {
       wrapped[key] = {
         __type: 'function',

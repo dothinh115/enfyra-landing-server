@@ -9,9 +9,7 @@ import {
 } from '../error-recovery.helper';
 import { executeCheckPermission } from './check-permission.executor';
 import { DynamicRepositoryExecutorDependencies } from '../types';
-
 const logger = new Logger('DynamicRepositoryExecutor');
-
 export async function executeDynamicRepository(
   args: {
     table: string;
@@ -28,7 +26,6 @@ export async function executeDynamicRepository(
   abortSignal: AbortSignal | undefined,
   deps: DynamicRepositoryExecutorDependencies,
 ): Promise<any> {
-
   if (abortSignal?.aborted) {
     return {
       error: true,
@@ -36,11 +33,9 @@ export async function executeDynamicRepository(
       message: 'Request aborted by client',
     };
   }
-
   if (typeof args.table === 'string') {
     args.table = args.table.trim();
   }
-
   if (!args.table) {
     logger.debug(JSON.stringify({
       layer: 'dynamic_repository',
@@ -63,7 +58,6 @@ export async function executeDynamicRepository(
       suggestion: 'Find the table name or ID first (get_table_details or find_records on table_definition), then call this tool with the table parameter.',
     };
   }
-
   if (args.table === 'table_definition' && (args.operation === 'create' || args.operation === 'update')) {
     return {
       error: true,
@@ -73,14 +67,12 @@ export async function executeDynamicRepository(
       suggestion: `Use ${args.operation === 'create' ? 'create_tables' : 'update_tables'} tool instead for table_definition operations.`,
     };
   }
-
   if (args.operation === 'findOne') {
     args.operation = 'find' as any;
     if (!args.limit || args.limit > 1) {
       args.limit = 1;
     }
   }
-
   const {
     queryBuilder,
     tableHandlerService,
@@ -94,7 +86,6 @@ export async function executeDynamicRepository(
     swaggerService,
     graphqlService,
   } = deps;
-
   const repo = new DynamicRepository({
     context,
     tableName: args.table,
@@ -112,23 +103,18 @@ export async function executeDynamicRepository(
     swaggerService,
     graphqlService,
   });
-
   await repo.init();
-
   const isMetadataTable = args.table.endsWith('_definition');
   const needsPermissionCheck =
     !isMetadataTable &&
     ['find', 'create', 'update', 'delete'].includes(args.operation);
-
   if (needsPermissionCheck) {
     const permissionCache: Map<string, any> =
       ((context as any).__permissionCache as Map<string, any>) ||
       (((context as any).__permissionCache = new Map<string, any>()) as Map<string, any>);
-
     const userId = context.$user?.id;
     const operation = args.operation === 'find' || args.operation === 'findOne' ? 'read' : args.operation;
     const cacheKey = `${userId || 'anon'}|${operation}|${args.table || ''}|`;
-
     if (!permissionCache.has(cacheKey)) {
       const isMetadataTable = args.table?.endsWith('_definition');
       if (!isMetadataTable) {
@@ -163,7 +149,6 @@ export async function executeDynamicRepository(
       }
     }
   }
-
   const preview: Record<string, any> = {
     operation: args.operation,
     table: args.table,
@@ -176,25 +161,20 @@ export async function executeDynamicRepository(
   if (args.data) {
     preview.dataKeys = Object.keys(args.data);
   }
-
   try {
     if (args.operation === 'delete' && !args.id) {
       if (!args.where) {
         throw new Error('id or where is required for delete operation');
       }
-
       const lookup = await repo.find({
         where: args.where,
         fields: 'id',
         limit: 0,
       });
-
       const records = (lookup.data || []).map((item: any) => item.id || item._id).filter(Boolean);
-
       if (records.length === 0) {
         throw new Error('No records found for delete operation');
       }
-
       if (records.length === 1) {
         args.id = records[0];
       } else {
@@ -209,10 +189,7 @@ export async function executeDynamicRepository(
         };
       }
     }
-
-    // Ensure fields has a valid value (at least 'id') to avoid query engine issues
     const safeFields = args.fields && args.fields.trim() ? args.fields : 'id';
-
     let result: any;
     switch (args.operation) {
       case 'find':
@@ -256,7 +233,6 @@ export async function executeDynamicRepository(
     logger.error(`[dynamic_repository] Error in ${args.operation} on ${args.table}: ${errorMessage}`, error?.stack);
     const recovery = getRecoveryStrategy(error);
     const details = error?.details || error?.response?.details || {};
-
     const isPermissionError =
       errorMessage.includes('permission denied') ||
       errorMessage.includes('unauthorized') ||
@@ -267,7 +243,6 @@ export async function executeDynamicRepository(
       error?.statusCode === 401 ||
       error?.statusCode === 403 ||
       error?.code === 'PERMISSION_DENIED';
-
     if (isPermissionError) {
       return {
         error: true,
@@ -282,18 +257,15 @@ export async function executeDynamicRepository(
         },
       };
     }
-
     const isForeignKeyError =
       errorMessage.includes('violates foreign key constraint') ||
       errorMessage.includes('foreign key constraint') ||
       errorMessage.includes('Key (') && errorMessage.includes(') is not present in table');
-
     if (isForeignKeyError) {
       const fkMatch = errorMessage.match(/Key \(([^)]+)\)/);
       const fkColumn = fkMatch ? fkMatch[1] : 'unknown';
       const refTableMatch = errorMessage.match(/table "([^"]+)"/);
       const refTable = refTableMatch ? refTableMatch[1] : 'unknown';
-
       return {
         error: true,
         errorType: 'INVALID_INPUT',
@@ -309,14 +281,11 @@ export async function executeDynamicRepository(
         },
       };
     }
-
-    // Detect if LLM is trying to use table name as id value (common mistake when deleting tables)
     const isTableNameAsIdError =
       (args.operation === 'delete' || args.operation === 'update') &&
       (errorMessage.includes('operator does not exist: character varying = uuid') ||
         errorMessage.includes('operator does not exist') && errorMessage.includes('character varying')) &&
       (args.where?.id?._eq === args.table || args.id === args.table);
-
     if (isTableNameAsIdError) {
       return {
         error: true,
@@ -333,21 +302,17 @@ export async function executeDynamicRepository(
         },
       };
     }
-
     const isColumnNotExistError =
       errorMessage.includes('column') &&
       (errorMessage.includes('does not exist') ||
         errorMessage.includes('Invalid column in query'));
-
     if (isColumnNotExistError) {
       const columnMatch = errorMessage.match(/column "([^"]+)"|column ([^\s]+) does not exist/i);
       const columnName = columnMatch ? (columnMatch[1] || columnMatch[2]) : 'unknown';
       const tableMatch = errorMessage.match(/from "([^"]+)"|table "([^"]+)"/i);
       const tableName = tableMatch ? (tableMatch[1] || tableMatch[2]) : args.table;
-
       const usedInWhere = args.where ? JSON.stringify(args.where) : '';
       const usedInFields = args.fields || '';
-
       return {
         error: true,
         errorType: 'INVALID_INPUT',
@@ -364,33 +329,27 @@ export async function executeDynamicRepository(
         },
       };
     }
-
     const isConstraintError =
       (args.operation === 'create' || args.operation === 'update') &&
       (errorMessage.includes('null value in column') ||
         errorMessage.includes('violates not-null constraint') ||
         errorMessage.includes('violates check constraint') ||
         errorMessage.includes('column') && errorMessage.includes('is required'));
-
     if (isConstraintError) {
       const columnMatch = errorMessage.match(/column "([^"]+)" of relation "([^"]+)"/);
       const columnName = columnMatch ? columnMatch[1] : 'unknown';
       const tableName = columnMatch ? columnMatch[2] : args.table;
-
       const providedFields = args.data ? Object.keys(args.data) : [];
-      
       const snakeToCamel = (str: string) => str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
       const camelToSnake = (str: string) => str.replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase();
-      
       const columnCamelCase = snakeToCamel(columnName);
       const possibleMismatch = providedFields.find((field: string) => {
         const fieldSnakeCase = camelToSnake(field);
-        return field === columnCamelCase || 
+        return field === columnCamelCase ||
                fieldSnakeCase === columnName ||
                field.toLowerCase() === columnName.toLowerCase() ||
                field.replace(/_/g, '').toLowerCase() === columnName.replace(/_/g, '').toLowerCase();
       });
-
       const isFkColumn = columnName.includes('_id') || columnName.toLowerCase().endsWith('id');
       const possibleRelationField = providedFields.find((field: string) => {
         const fieldSnakeCase = camelToSnake(field);
@@ -398,16 +357,13 @@ export async function executeDynamicRepository(
         const columnWithoutId = columnName.replace(/_id$/, '').replace(/[Ii]d$/, '');
         return fieldWithoutId === columnWithoutId || fieldSnakeCase.replace(/_id$/, '') === columnName.replace(/_id$/, '');
       });
-
       let mismatchHint = '';
       if (possibleMismatch && possibleMismatch !== columnName) {
         mismatchHint = `\n\n⚠️ **Column Name Mismatch Detected**: You used "${possibleMismatch}" but the database column is "${columnName}". Column names in the database are in snake_case (e.g., order_number, unit_price), not camelCase (e.g., orderNumber, unitPrice). Always use the exact column names from get_table_details.`;
       }
-      
       if (isFkColumn && possibleRelationField && possibleRelationField !== columnName) {
         mismatchHint += `\n\n⚠️ **Relation Format Error**: You used FK column "${possibleRelationField}" (or similar), but relations should use propertyName from get_table_details result.relations[]. Use propertyName format: {"${possibleRelationField.replace(/[Ii]d$/, '').replace(/_id$/, '')}": {"id": <value>}} OR {"${possibleRelationField.replace(/[Ii]d$/, '').replace(/_id$/, '')}": <value>}. NEVER use FK column names like "${columnName}" - system auto-generates them from propertyName.`;
       }
-
       return {
         error: true,
         errorType: 'INVALID_INPUT',
@@ -424,13 +380,11 @@ export async function executeDynamicRepository(
         },
       };
     }
-
     const escalation = shouldEscalateToHuman({
       operation: args.operation,
       table: args.table,
       error,
     });
-
     if (escalation.shouldEscalate) {
       const escalationMessage = formatEscalationMessage(escalation);
       const userFacing = escalationMessage || formatErrorForUser(error);
@@ -446,11 +400,9 @@ export async function executeDynamicRepository(
         escalationMessage,
       };
     }
-
     const businessLogicError =
       error?.errorCode === 'BUSINESS_LOGIC_ERROR' ||
       error?.response?.errorCode === 'BUSINESS_LOGIC_ERROR';
-
     if (businessLogicError) {
       return {
         error: true,
@@ -461,7 +413,6 @@ export async function executeDynamicRepository(
         details,
       };
     }
-
     return {
       error: true,
       errorType: recovery.errorType,
@@ -472,4 +423,3 @@ export async function executeDynamicRepository(
     };
   }
 }
-

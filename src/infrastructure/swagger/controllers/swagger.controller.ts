@@ -2,27 +2,21 @@ import { Controller, Get, Res } from '@nestjs/common';
 import { Public } from '../../../shared/decorators/public-route.decorator';
 import { SwaggerService } from '../services/swagger.service';
 import { Response } from 'express';
-
 @Controller('api-docs')
 export class SwaggerController {
   constructor(private readonly swaggerService: SwaggerService) {}
-
   @Public()
   @Get()
   getSwaggerUI(@Res() res: Response) {
     const spec = this.swaggerService.getCurrentSpec();
-    
-    // Serve Swagger UI HTML
     const html = this.generateSwaggerHTML(spec);
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
   }
-
   @Get('json')
   getSwaggerSpec() {
     return this.swaggerService.getCurrentSpec();
   }
-
   private generateSwaggerHTML(spec: any): string {
     return `
 <!DOCTYPE html>
@@ -40,7 +34,6 @@ export class SwaggerController {
   <script>
     window.onload = function() {
       const spec = ${JSON.stringify(spec)};
-      
       window.ui = SwaggerUIBundle({
         spec: spec,
         dom_id: '#swagger-ui',
@@ -62,4 +55,3 @@ export class SwaggerController {
     `;
   }
 }
-
