@@ -716,61 +716,6 @@
             "description": "Backend packages management",
             "order": 3,
             "parent": "Packages"
-        },
-        {
-            "type": "Dropdown Menu",
-            "label": "WebSocket",
-            "icon": "lucide:radio",
-            "path": "/websocket",
-            "isEnabled": true,
-            "isSystem": true,
-            "description": "WebSocket gateways and events",
-            "order": 9,
-            "permission": {
-                "allowAll": true
-            }
-        },
-        {
-            "type": "Menu",
-            "label": "Gateways",
-            "icon": "lucide:radio-tower",
-            "path": "/websocket/gateways",
-            "isEnabled": true,
-            "isSystem": true,
-            "description": "WebSocket gateway management",
-            "order": 1,
-            "parent": "WebSocket",
-            "permission": {
-                "allowAll": true
-            }
-        },
-        {
-            "type": "Menu",
-            "label": "Events",
-            "icon": "lucide:zap",
-            "path": "/websocket/events",
-            "isEnabled": true,
-            "isSystem": true,
-            "description": "WebSocket event management",
-            "order": 2,
-            "parent": "WebSocket",
-            "permission": {
-                "allowAll": true
-            }
-        },
-        {
-            "type": "Menu",
-            "label": "Test Tool",
-            "icon": "lucide:test-tube",
-            "path": "/websocket/test",
-            "isEnabled": true,
-            "isSystem": true,
-            "description": "WebSocket testing tool",
-            "order": 3,
-            "parent": "WebSocket",
-            "permission": {
-                "allowAll": true
-            }
         }
     ]
 }

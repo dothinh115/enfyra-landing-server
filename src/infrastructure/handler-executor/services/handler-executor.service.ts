@@ -5,7 +5,6 @@ import { PackageCacheService } from '../../cache/services/package-cache.service'
 import { ChildProcessManager } from '../utils/child-process-manager';
 import { wrapCtx } from '../utils/wrap-ctx';
 import { ExecutorPoolService } from './executor-pool.service';
-import { transformCode } from '../code-transformer';
 
 @Injectable()
 export class HandlerExecutorService {
@@ -24,8 +23,6 @@ export class HandlerExecutorService {
     const packages = await this.packageCacheService.getPackages();
     const pool = this.executorPoolService.getPool();
 
-    const transformedCode = transformCode(code);
-
     const child = await pool.acquire();
     const isDone = { value: false };
 
@@ -34,7 +31,7 @@ export class HandlerExecutorService {
         const timeout = ChildProcessManager.setupTimeout(
           child,
           timeoutMs,
-          transformedCode,
+          code,
           isDone,
           reject,
           pool,
@@ -48,10 +45,10 @@ export class HandlerExecutorService {
           isDone,
           resolve,
           reject,
-          transformedCode,
+          code,
         );
 
-        ChildProcessManager.sendExecuteMessage(child, wrapCtx(ctx), transformedCode, packages);
+        ChildProcessManager.sendExecuteMessage(child, wrapCtx(ctx), code, packages);
       } catch (error) {
         pool.release(child).catch(() => {});
         reject(error);
