@@ -49,75 +49,10 @@ function restoreStringsAndComments(code: string, placeholders: Array<{ placehold
   return result;
 }
 
-const addAwaitToProxyCalls = (code: string): string => {
-  const { result: stripped, placeholders } = stripStringsAndComments(code);
-
-  let processed = stripped;
-  processed = processed.replace(/(?<!await\s+)(\$ctx\.\$res\.[a-zA-Z_]+\()/g, 'await $1');
-  processed = processed.replace(/(?<!await\s+)(\$ctx\.\$cache\.[a-zA-Z_]+\()/g, 'await $1');
-  processed = processed.replace(/(?<!await\s+)(\$ctx\.\$repos\.[a-zA-Z_]+\.[a-zA-Z_]+\()/g, 'await $1');
-  processed = processed.replace(/(?<!await\s+)(\$ctx\.\$helpers\.\$bcrypt\.[a-zA-Z_]+\()/g, 'await $1');
-
-  return restoreStringsAndComments(processed, placeholders);
-};
-
 export const pendingCalls = new Map();
 
 process.on('unhandledRejection', (reason: any) => {
-  try {
-    let errorMessage = String(reason);
-    let errorName = 'UnhandledRejection';
-    let statusCode = undefined;
-    let stack = undefined;
-
-    if (reason?.message) {
-      errorMessage = reason.message;
-    } else if (reason?.errorResponse?.message) {
-      errorMessage = reason.errorResponse.message;
-    } else if (reason?.response?.message) {
-      errorMessage = reason.response.message;
-    } else if (typeof reason?.response === 'string') {
-      errorMessage = reason.response;
-    }
-
-    if (reason?.errorResponse?.name) {
-      errorName = reason.errorResponse.name;
-    } else if (reason?.response?.name) {
-      errorName = reason.response.name;
-    } else if (reason?.name) {
-      errorName = reason.name;
-    }
-
-    if (reason?.errorResponse?.statusCode) {
-      statusCode = reason.errorResponse.statusCode;
-    } else if (reason?.response?.statusCode) {
-      statusCode = reason.response.statusCode;
-    } else if (reason?.statusCode) {
-      statusCode = reason.statusCode;
-    }
-
-    if (reason?.errorResponse?.stack) {
-      stack = reason.errorResponse.stack;
-    } else if (reason?.response?.stack) {
-      stack = reason.response.stack;
-    } else if (reason?.stack) {
-      stack = reason.stack;
-    }
-
-    process.send?.({
-      type: 'error',
-      error: {
-        message: errorMessage,
-        stack: stack,
-        name: errorName,
-        statusCode: statusCode,
-      },
-    });
-  } catch (sendError) {
-    console.error('Failed to send error:', sendError);
-  }
-
-  setTimeout(() => process.exit(1), 100);
+  console.warn('[Fire-and-forget] Unhandled proxy call rejection:', reason?.message || reason);
 });
 
 process.on('uncaughtException', (error: any) => {
@@ -238,7 +173,7 @@ process.on('message', async (msg: any) => {
       }
     }
 
-    let processedCode = addAwaitToProxyCalls(msg.code);
+    let processedCode = msg.code;
 
     const wrappedCode = `"use strict";
 return (async () => {
