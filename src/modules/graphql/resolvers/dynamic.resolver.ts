@@ -4,6 +4,7 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { throwGqlError } from '../utils/throw-error';
 import { ConfigService } from '@nestjs/config';
 import { DynamicRepository } from '../../dynamic-api/repositories/dynamic.repository';
@@ -15,7 +16,6 @@ import { QueryBuilderService } from '../../../infrastructure/query-builder/query
 import { MetadataCacheService } from '../../../infrastructure/cache/services/metadata-cache.service';
 import { HandlerExecutorService } from '../../../infrastructure/handler-executor/services/handler-executor.service';
 import { RouteCacheService } from '../../../infrastructure/cache/services/route-cache.service';
-import { StorageConfigCacheService } from '../../../infrastructure/cache/services/storage-config-cache.service';
 import { SystemProtectionService } from '../../dynamic-api/services/system-protection.service';
 import { TableValidationService } from '../../dynamic-api/services/table-validation.service';
 import { ScriptErrorFactory } from '../../../shared/utils/script-error-factory';
@@ -30,10 +30,10 @@ export class DynamicResolver {
     private metadataCacheService: MetadataCacheService,
     private handlerExecutorService: HandlerExecutorService,
     private routeCacheService: RouteCacheService,
-    private storageConfigCacheService: StorageConfigCacheService,
     private systemProtectionService: SystemProtectionService,
     private tableValidationService: TableValidationService,
     private configService: ConfigService,
+    private eventEmitter: EventEmitter2,
   ) {}
   async dynamicResolver(
     tableName: string,
@@ -102,10 +102,9 @@ export class DynamicResolver {
           queryBuilder: this.queryBuilder,
           metadataCacheService: this.metadataCacheService,
           queryEngine: this.queryEngine,
-          routeCacheService: this.routeCacheService,
-          storageConfigCacheService: this.storageConfigCacheService,
           systemProtectionService: this.systemProtectionService,
           tableValidationService: this.tableValidationService,
+          eventEmitter: this.eventEmitter,
         });
         await dynamicRepo.init();
         const name =
@@ -157,10 +156,9 @@ export class DynamicResolver {
         queryBuilder: this.queryBuilder,
         metadataCacheService: this.metadataCacheService,
         tableHandlerService: this.tableHandlerService,
-        routeCacheService: this.routeCacheService,
-        storageConfigCacheService: this.storageConfigCacheService,
         systemProtectionService: this.systemProtectionService,
         tableValidationService: this.tableValidationService,
+        eventEmitter: this.eventEmitter,
       });
       await dynamicRepo.init();
       const dynamicFindEntries = [
@@ -174,10 +172,9 @@ export class DynamicResolver {
             queryBuilder: this.queryBuilder,
             metadataCacheService: this.metadataCacheService,
             tableHandlerService: this.tableHandlerService,
-            routeCacheService: this.routeCacheService,
-            storageConfigCacheService: this.storageConfigCacheService,
             systemProtectionService: this.systemProtectionService,
             tableValidationService: this.tableValidationService,
+            eventEmitter: this.eventEmitter,
           }),
         ]),
       ];

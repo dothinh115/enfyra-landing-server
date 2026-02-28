@@ -219,6 +219,33 @@ export class SqlQueryExecutor {
                           return String(v);
                         }).join(', ');
                         parts.push(`${quotedField} NOT IN (${notInSql})`);
+                      } else if (op === '_contains') {
+                        const escapedVal = String(val).replace(/'/g, "''");
+                        if (this.dbType === 'postgres') {
+                          parts.push(`lower(unaccent(${quotedField})) ILIKE '%' || lower(unaccent('${escapedVal}')) || '%'`);
+                        } else {
+                          parts.push(`lower(${quotedField}) LIKE '%${escapedVal.toLowerCase()}%'`);
+                        }
+                      } else if (op === '_starts_with') {
+                        const escapedVal = String(val).replace(/'/g, "''");
+                        if (this.dbType === 'postgres') {
+                          parts.push(`lower(unaccent(${quotedField})) ILIKE lower(unaccent('${escapedVal}')) || '%'`);
+                        } else {
+                          parts.push(`lower(${quotedField}) LIKE '${escapedVal.toLowerCase()}%'`);
+                        }
+                      } else if (op === '_ends_with') {
+                        const escapedVal = String(val).replace(/'/g, "''");
+                        if (this.dbType === 'postgres') {
+                          parts.push(`lower(unaccent(${quotedField})) ILIKE '%' || lower(unaccent('${escapedVal}'))`);
+                        } else {
+                          parts.push(`lower(${quotedField}) LIKE '%${escapedVal.toLowerCase()}'`);
+                        }
+                      } else if (op === '_between') {
+                        if (Array.isArray(val) && val.length === 2) {
+                          const v1 = typeof val[0] === 'string' ? `'${val[0].replace(/'/g, "''")}'` : String(val[0]);
+                          const v2 = typeof val[1] === 'string' ? `'${val[1].replace(/'/g, "''")}'` : String(val[1]);
+                          parts.push(`${quotedField} BETWEEN ${v1} AND ${v2}`);
+                        }
                       }
                     }
                   } else {

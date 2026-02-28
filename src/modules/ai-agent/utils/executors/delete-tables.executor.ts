@@ -1,15 +1,11 @@
 import { Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MetadataCacheService } from '../../../../infrastructure/cache/services/metadata-cache.service';
 import { QueryBuilderService } from '../../../../infrastructure/query-builder/query-builder.service';
 import { TableHandlerService } from '../../../table-management/services/table-handler.service';
 import { QueryEngine } from '../../../../infrastructure/query-engine/services/query-engine.service';
-import { RouteCacheService } from '../../../../infrastructure/cache/services/route-cache.service';
-import { StorageConfigCacheService } from '../../../../infrastructure/cache/services/storage-config-cache.service';
-import { AiConfigCacheService } from '../../../../infrastructure/cache/services/ai-config-cache.service';
 import { SystemProtectionService } from '../../../dynamic-api/services/system-protection.service';
 import { TableValidationService } from '../../../dynamic-api/services/table-validation.service';
-import { SwaggerService } from '../../../../infrastructure/swagger/services/swagger.service';
-import { GraphqlService } from '../../../graphql/services/graphql.service';
 import { TDynamicContext } from '../../../../shared/interfaces/dynamic-context.interface';
 import { executeCheckPermission } from './check-permission.executor';
 import { DynamicRepository } from '../../../dynamic-api/repositories/dynamic.repository';
@@ -29,16 +25,10 @@ async function executeDeleteSingleTable(
     queryBuilder: deps.queryBuilder,
     tableHandlerService: deps.tableHandlerService,
     queryEngine: deps.queryEngine,
-    routeCacheService: deps.routeCacheService,
-    storageConfigCacheService: deps.storageConfigCacheService,
-    aiConfigCacheService: deps.aiConfigCacheService,
     systemProtectionService: deps.systemProtectionService,
     tableValidationService: deps.tableValidationService,
-    bootstrapScriptService: undefined,
-    redisPubSubService: undefined,
     metadataCacheService: deps.metadataCacheService,
-    swaggerService: deps.swaggerService,
-    graphqlService: deps.graphqlService,
+    eventEmitter: deps.eventEmitter,
   });
   await repo.init();
 

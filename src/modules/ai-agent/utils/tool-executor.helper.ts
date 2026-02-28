@@ -1,15 +1,12 @@
 import { Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MetadataCacheService } from '../../../infrastructure/cache/services/metadata-cache.service';
 import { QueryBuilderService } from '../../../infrastructure/query-builder/query-builder.service';
 import { TableHandlerService } from '../../table-management/services/table-handler.service';
 import { QueryEngine } from '../../../infrastructure/query-engine/services/query-engine.service';
 import { RouteCacheService } from '../../../infrastructure/cache/services/route-cache.service';
-import { StorageConfigCacheService } from '../../../infrastructure/cache/services/storage-config-cache.service';
-import { AiConfigCacheService } from '../../../infrastructure/cache/services/ai-config-cache.service';
 import { SystemProtectionService } from '../../dynamic-api/services/system-protection.service';
 import { TableValidationService } from '../../dynamic-api/services/table-validation.service';
-import { SwaggerService } from '../../../infrastructure/swagger/services/swagger.service';
-import { GraphqlService } from '../../graphql/services/graphql.service';
 import { TDynamicContext } from '../../../shared/interfaces/dynamic-context.interface';
 import { ConversationService } from '../services/conversation.service';
 import { executeGetTableDetails } from './executors/get-table-details.executor';
@@ -31,13 +28,10 @@ export class ToolExecutor {
     private readonly tableHandlerService: TableHandlerService,
     private readonly queryEngine: QueryEngine,
     private readonly routeCacheService: RouteCacheService,
-    private readonly storageConfigCacheService: StorageConfigCacheService,
-    private readonly aiConfigCacheService: AiConfigCacheService,
     private readonly systemProtectionService: SystemProtectionService,
     private readonly tableValidationService: TableValidationService,
-    private readonly swaggerService: SwaggerService,
-    private readonly graphqlService: GraphqlService,
     private readonly conversationService: ConversationService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async executeTool(
@@ -79,21 +73,20 @@ export class ToolExecutor {
 
     let result: any;
 
+    const baseDeps = {
+      metadataCacheService: this.metadataCacheService,
+      queryBuilder: this.queryBuilder,
+      tableHandlerService: this.tableHandlerService,
+      queryEngine: this.queryEngine,
+      routeCacheService: this.routeCacheService,
+      systemProtectionService: this.systemProtectionService,
+      tableValidationService: this.tableValidationService,
+      eventEmitter: this.eventEmitter,
+    };
+
     switch (name) {
       case 'get_table_details':
-        result = await executeGetTableDetails(args, context, {
-          metadataCacheService: this.metadataCacheService,
-          queryBuilder: this.queryBuilder,
-          tableHandlerService: this.tableHandlerService,
-          queryEngine: this.queryEngine,
-          routeCacheService: this.routeCacheService,
-          storageConfigCacheService: this.storageConfigCacheService,
-          aiConfigCacheService: this.aiConfigCacheService,
-          systemProtectionService: this.systemProtectionService,
-          tableValidationService: this.tableValidationService,
-          swaggerService: this.swaggerService,
-          graphqlService: this.graphqlService,
-        });
+        result = await executeGetTableDetails(args, context, baseDeps);
         break;
       case 'get_hint':
         result = await executeGetHint(args, context, {
@@ -101,53 +94,14 @@ export class ToolExecutor {
         });
         break;
       case 'create_tables':
-        result = await executeCreateTables(args, context, abortSignal, {
-          metadataCacheService: this.metadataCacheService,
-          queryBuilder: this.queryBuilder,
-          tableHandlerService: this.tableHandlerService,
-          queryEngine: this.queryEngine,
-          routeCacheService: this.routeCacheService,
-          storageConfigCacheService: this.storageConfigCacheService,
-          aiConfigCacheService: this.aiConfigCacheService,
-          systemProtectionService: this.systemProtectionService,
-          tableValidationService: this.tableValidationService,
-          swaggerService: this.swaggerService,
-          graphqlService: this.graphqlService,
-        });
+        result = await executeCreateTables(args, context, abortSignal, baseDeps);
         break;
       case 'update_tables':
-        result = await executeUpdateTables(args, context, abortSignal, {
-          metadataCacheService: this.metadataCacheService,
-          queryBuilder: this.queryBuilder,
-          tableHandlerService: this.tableHandlerService,
-          queryEngine: this.queryEngine,
-          routeCacheService: this.routeCacheService,
-          storageConfigCacheService: this.storageConfigCacheService,
-          aiConfigCacheService: this.aiConfigCacheService,
-          systemProtectionService: this.systemProtectionService,
-          tableValidationService: this.tableValidationService,
-          swaggerService: this.swaggerService,
-          graphqlService: this.graphqlService,
-        });
+        result = await executeUpdateTables(args, context, abortSignal, baseDeps);
         break;
       case 'delete_tables':
-        result = await executeDeleteTables(args, context, abortSignal, {
-          metadataCacheService: this.metadataCacheService,
-          queryBuilder: this.queryBuilder,
-          tableHandlerService: this.tableHandlerService,
-          queryEngine: this.queryEngine,
-          routeCacheService: this.routeCacheService,
-          storageConfigCacheService: this.storageConfigCacheService,
-          aiConfigCacheService: this.aiConfigCacheService,
-          systemProtectionService: this.systemProtectionService,
-          tableValidationService: this.tableValidationService,
-          swaggerService: this.swaggerService,
-          graphqlService: this.graphqlService,
-        });
+        result = await executeDeleteTables(args, context, abortSignal, baseDeps);
         break;
-
-
-
       case 'update_task':
         result = await executeUpdateTask(args, context, {
           conversationService: this.conversationService,
@@ -163,19 +117,7 @@ export class ToolExecutor {
           { ...args, operation: 'find' },
           context,
           abortSignal,
-          {
-            metadataCacheService: this.metadataCacheService,
-            queryBuilder: this.queryBuilder,
-            tableHandlerService: this.tableHandlerService,
-            queryEngine: this.queryEngine,
-            routeCacheService: this.routeCacheService,
-            storageConfigCacheService: this.storageConfigCacheService,
-            aiConfigCacheService: this.aiConfigCacheService,
-            systemProtectionService: this.systemProtectionService,
-            tableValidationService: this.tableValidationService,
-            swaggerService: this.swaggerService,
-            graphqlService: this.graphqlService,
-          },
+          baseDeps,
         );
         break;
       case 'create_records':
@@ -187,19 +129,7 @@ export class ToolExecutor {
           },
           context,
           abortSignal,
-          {
-            metadataCacheService: this.metadataCacheService,
-            queryBuilder: this.queryBuilder,
-            tableHandlerService: this.tableHandlerService,
-            queryEngine: this.queryEngine,
-            routeCacheService: this.routeCacheService,
-            storageConfigCacheService: this.storageConfigCacheService,
-            aiConfigCacheService: this.aiConfigCacheService,
-            systemProtectionService: this.systemProtectionService,
-            tableValidationService: this.tableValidationService,
-            swaggerService: this.swaggerService,
-            graphqlService: this.graphqlService,
-          },
+          baseDeps,
         );
         break;
       case 'update_records':
@@ -211,19 +141,7 @@ export class ToolExecutor {
           },
           context,
           abortSignal,
-          {
-            metadataCacheService: this.metadataCacheService,
-            queryBuilder: this.queryBuilder,
-            tableHandlerService: this.tableHandlerService,
-            queryEngine: this.queryEngine,
-            routeCacheService: this.routeCacheService,
-            storageConfigCacheService: this.storageConfigCacheService,
-            aiConfigCacheService: this.aiConfigCacheService,
-            systemProtectionService: this.systemProtectionService,
-            tableValidationService: this.tableValidationService,
-            swaggerService: this.swaggerService,
-            graphqlService: this.graphqlService,
-          },
+          baseDeps,
         );
         break;
       case 'delete_records':
@@ -235,19 +153,7 @@ export class ToolExecutor {
           },
           context,
           abortSignal,
-          {
-            metadataCacheService: this.metadataCacheService,
-            queryBuilder: this.queryBuilder,
-            tableHandlerService: this.tableHandlerService,
-            queryEngine: this.queryEngine,
-            routeCacheService: this.routeCacheService,
-            storageConfigCacheService: this.storageConfigCacheService,
-            aiConfigCacheService: this.aiConfigCacheService,
-            systemProtectionService: this.systemProtectionService,
-            tableValidationService: this.tableValidationService,
-            swaggerService: this.swaggerService,
-            graphqlService: this.graphqlService,
-          },
+          baseDeps,
         );
         break;
       default:

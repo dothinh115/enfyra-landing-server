@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DynamicRepository } from '../../../dynamic-api/repositories/dynamic.repository';
 import { TDynamicContext } from '../../../../shared/interfaces/dynamic-context.interface';
 import {
@@ -77,14 +78,10 @@ export async function executeDynamicRepository(
     queryBuilder,
     tableHandlerService,
     queryEngine,
-    routeCacheService,
-    storageConfigCacheService,
-    aiConfigCacheService,
     metadataCacheService,
     systemProtectionService,
     tableValidationService,
-    swaggerService,
-    graphqlService,
+    eventEmitter,
   } = deps;
   const repo = new DynamicRepository({
     context,
@@ -92,16 +89,10 @@ export async function executeDynamicRepository(
     queryBuilder,
     tableHandlerService,
     queryEngine,
-    routeCacheService,
-    storageConfigCacheService,
-    aiConfigCacheService,
     metadataCacheService,
     systemProtectionService,
     tableValidationService,
-    bootstrapScriptService: undefined,
-    redisPubSubService: undefined,
-    swaggerService,
-    graphqlService,
+    eventEmitter,
   });
   await repo.init();
   const isMetadataTable = args.table.endsWith('_definition');

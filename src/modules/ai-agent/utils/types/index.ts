@@ -3,12 +3,9 @@ import { QueryBuilderService } from '../../../../infrastructure/query-builder/qu
 import { TableHandlerService } from '../../../table-management/services/table-handler.service';
 import { QueryEngine } from '../../../../infrastructure/query-engine/services/query-engine.service';
 import { RouteCacheService } from '../../../../infrastructure/cache/services/route-cache.service';
-import { StorageConfigCacheService } from '../../../../infrastructure/cache/services/storage-config-cache.service';
-import { AiConfigCacheService } from '../../../../infrastructure/cache/services/ai-config-cache.service';
 import { SystemProtectionService } from '../../../dynamic-api/services/system-protection.service';
 import { TableValidationService } from '../../../dynamic-api/services/table-validation.service';
-import { SwaggerService } from '../../../../infrastructure/swagger/services/swagger.service';
-import { GraphqlService } from '../../../graphql/services/graphql.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ConversationService } from '../../services/conversation.service';
 
 export type MessageRole = 'user' | 'assistant' | 'system';
@@ -203,13 +200,9 @@ export interface GetTableDetailsExecutorDependencies {
   queryBuilder: QueryBuilderService;
   tableHandlerService: TableHandlerService;
   queryEngine: QueryEngine;
-  routeCacheService: RouteCacheService;
-  storageConfigCacheService: StorageConfigCacheService;
-  aiConfigCacheService: AiConfigCacheService;
   systemProtectionService: SystemProtectionService;
   tableValidationService: TableValidationService;
-  swaggerService: SwaggerService;
-  graphqlService: GraphqlService;
+  eventEmitter: EventEmitter2;
 }
 
 export interface DynamicRepositoryExecutorDependencies extends CheckPermissionExecutorDependencies {
@@ -217,13 +210,9 @@ export interface DynamicRepositoryExecutorDependencies extends CheckPermissionEx
   queryBuilder: QueryBuilderService;
   tableHandlerService: TableHandlerService;
   queryEngine: QueryEngine;
-  routeCacheService: RouteCacheService;
-  storageConfigCacheService: StorageConfigCacheService;
-  aiConfigCacheService: AiConfigCacheService;
   systemProtectionService: SystemProtectionService;
   tableValidationService: TableValidationService;
-  swaggerService: SwaggerService;
-  graphqlService: GraphqlService;
+  eventEmitter: EventEmitter2;
 }
 
 export interface BatchDynamicRepositoryExecutorDependencies extends CheckPermissionExecutorDependencies {
@@ -231,13 +220,9 @@ export interface BatchDynamicRepositoryExecutorDependencies extends CheckPermiss
   queryBuilder: QueryBuilderService;
   tableHandlerService: TableHandlerService;
   queryEngine: QueryEngine;
-  routeCacheService: RouteCacheService;
-  storageConfigCacheService: StorageConfigCacheService;
-  aiConfigCacheService: AiConfigCacheService;
   systemProtectionService: SystemProtectionService;
   tableValidationService: TableValidationService;
-  swaggerService: SwaggerService;
-  graphqlService: GraphqlService;
+  eventEmitter: EventEmitter2;
 }
 
 export interface CreateTablesExecutorDependencies extends CheckPermissionExecutorDependencies {
@@ -245,13 +230,9 @@ export interface CreateTablesExecutorDependencies extends CheckPermissionExecuto
   queryBuilder: QueryBuilderService;
   tableHandlerService: TableHandlerService;
   queryEngine: QueryEngine;
-  routeCacheService: RouteCacheService;
-  storageConfigCacheService: StorageConfigCacheService;
-  aiConfigCacheService: AiConfigCacheService;
   systemProtectionService: SystemProtectionService;
   tableValidationService: TableValidationService;
-  swaggerService: SwaggerService;
-  graphqlService: GraphqlService;
+  eventEmitter: EventEmitter2;
 }
 
 export interface UpdateTablesExecutorDependencies extends CheckPermissionExecutorDependencies {
@@ -259,13 +240,9 @@ export interface UpdateTablesExecutorDependencies extends CheckPermissionExecuto
   queryBuilder: QueryBuilderService;
   tableHandlerService: TableHandlerService;
   queryEngine: QueryEngine;
-  routeCacheService: RouteCacheService;
-  storageConfigCacheService: StorageConfigCacheService;
-  aiConfigCacheService: AiConfigCacheService;
   systemProtectionService: SystemProtectionService;
   tableValidationService: TableValidationService;
-  swaggerService: SwaggerService;
-  graphqlService: GraphqlService;
+  eventEmitter: EventEmitter2;
 }
 
 export interface DeleteTablesExecutorDependencies extends CheckPermissionExecutorDependencies {
@@ -273,13 +250,9 @@ export interface DeleteTablesExecutorDependencies extends CheckPermissionExecuto
   queryBuilder: QueryBuilderService;
   tableHandlerService: TableHandlerService;
   queryEngine: QueryEngine;
-  routeCacheService: RouteCacheService;
-  storageConfigCacheService: StorageConfigCacheService;
-  aiConfigCacheService: AiConfigCacheService;
   systemProtectionService: SystemProtectionService;
   tableValidationService: TableValidationService;
-  swaggerService: SwaggerService;
-  graphqlService: GraphqlService;
+  eventEmitter: EventEmitter2;
 }
 
 export interface UpdateTaskExecutorDependencies {

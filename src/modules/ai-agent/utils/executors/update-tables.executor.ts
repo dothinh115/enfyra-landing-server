@@ -3,13 +3,8 @@ import { MetadataCacheService } from '../../../../infrastructure/cache/services/
 import { QueryBuilderService } from '../../../../infrastructure/query-builder/query-builder.service';
 import { TableHandlerService } from '../../../table-management/services/table-handler.service';
 import { QueryEngine } from '../../../../infrastructure/query-engine/services/query-engine.service';
-import { RouteCacheService } from '../../../../infrastructure/cache/services/route-cache.service';
-import { StorageConfigCacheService } from '../../../../infrastructure/cache/services/storage-config-cache.service';
-import { AiConfigCacheService } from '../../../../infrastructure/cache/services/ai-config-cache.service';
 import { SystemProtectionService } from '../../../dynamic-api/services/system-protection.service';
 import { TableValidationService } from '../../../dynamic-api/services/table-validation.service';
-import { SwaggerService } from '../../../../infrastructure/swagger/services/swagger.service';
-import { GraphqlService } from '../../../graphql/services/graphql.service';
 import { TDynamicContext } from '../../../../shared/interfaces/dynamic-context.interface';
 import { TableUpdateWorkflow } from '../table-update-workflow';
 import { executeCheckPermission } from './check-permission.executor';
@@ -36,13 +31,9 @@ async function executeUpdateSingleTable(
     queryBuilder,
     tableHandlerService,
     queryEngine,
-    routeCacheService,
-    storageConfigCacheService,
-    aiConfigCacheService,
     systemProtectionService,
     tableValidationService,
-    swaggerService,
-    graphqlService,
+    eventEmitter,
   } = deps;
 
   try {
@@ -51,13 +42,9 @@ async function executeUpdateSingleTable(
       queryBuilder,
       tableHandlerService,
       queryEngine,
-      routeCacheService,
-      storageConfigCacheService,
-      aiConfigCacheService,
       systemProtectionService,
       tableValidationService,
-      swaggerService,
-      graphqlService,
+      eventEmitter,
     );
 
     const updateData: any = {};

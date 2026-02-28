@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnApplicationBootstrap, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { QueryBuilderService } from '../../query-builder/query-builder.service';
 import { CacheService } from './cache.service';
 import { RedisPubSubService } from './redis-pubsub.service';
@@ -11,6 +12,7 @@ import {
   METADATA_RELOAD_LOCK_KEY,
   REDIS_TTL,
 } from '../../../shared/utils/constant';
+import { CACHE_EVENTS, CACHE_IDENTIFIERS, shouldReloadCache } from '../../../shared/utils/cache-events.constants';
 import { ObjectId } from 'mongodb';
 
 export interface EnfyraMetadata {
@@ -91,6 +93,19 @@ export class MetadataCacheService implements OnApplicationBootstrap, OnModuleIni
       METADATA_CACHE_SYNC_EVENT_KEY,
       this.messageHandler
     );
+  }
+
+  /**
+   * Listen for cache invalidation events.
+   * When a table that affects metadata is modified, reload the cache.
+   * The reload() method handles Redis Pub/Sub to sync other instances.
+   */
+  @OnEvent(CACHE_EVENTS.INVALIDATE)
+  async handleCacheInvalidation(payload: { tableName: string; action: string }) {
+    if (shouldReloadCache(payload.tableName, CACHE_IDENTIFIERS.METADATA)) {
+      this.logger.log(`Cache invalidation event received for table: ${payload.tableName}`);
+      await this.reload();
+    }
   }
 
   private async loadMetadataFromDb(): Promise<EnfyraMetadata> {

@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { RedisModule } from '@liaoliaots/nestjs-redis';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 import { AuthModule } from './core/auth/auth.module';
 import { JwtAuthGuard } from './core/auth/guards/jwt-auth.guard';
@@ -49,6 +50,7 @@ import { WebsocketModule } from './modules/websocket/websocket.module';
       isGlobal: true,
       envFilePath: path.resolve(__dirname, '../.env'),
     }),
+    EventEmitterModule.forRoot(),
     KnexModule,
     MongoModule,
     BootstrapModule,

@@ -1,16 +1,12 @@
 import { Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DynamicRepository } from '../../../dynamic-api/repositories/dynamic.repository';
 import { QueryBuilderService } from '../../../../infrastructure/query-builder/query-builder.service';
 import { TableHandlerService } from '../../../table-management/services/table-handler.service';
 import { QueryEngine } from '../../../../infrastructure/query-engine/services/query-engine.service';
-import { RouteCacheService } from '../../../../infrastructure/cache/services/route-cache.service';
-import { StorageConfigCacheService } from '../../../../infrastructure/cache/services/storage-config-cache.service';
-import { AiConfigCacheService } from '../../../../infrastructure/cache/services/ai-config-cache.service';
 import { MetadataCacheService } from '../../../../infrastructure/cache/services/metadata-cache.service';
 import { SystemProtectionService } from '../../../dynamic-api/services/system-protection.service';
 import { TableValidationService } from '../../../dynamic-api/services/table-validation.service';
-import { SwaggerService } from '../../../../infrastructure/swagger/services/swagger.service';
-import { GraphqlService } from '../../../graphql/services/graphql.service';
 import { TDynamicContext } from '../../../../shared/interfaces/dynamic-context.interface';
 import {
   formatErrorForUser,
@@ -45,14 +41,10 @@ export async function executeBatchDynamicRepository(
     queryBuilder,
     tableHandlerService,
     queryEngine,
-    routeCacheService,
-    storageConfigCacheService,
-    aiConfigCacheService,
     metadataCacheService,
     systemProtectionService,
     tableValidationService,
-    swaggerService,
-    graphqlService,
+    eventEmitter,
   } = deps;
   const repo = new DynamicRepository({
     context,
@@ -60,14 +52,10 @@ export async function executeBatchDynamicRepository(
     queryBuilder,
     tableHandlerService,
     queryEngine,
-    routeCacheService,
-    storageConfigCacheService,
-    aiConfigCacheService,
     metadataCacheService,
     systemProtectionService,
     tableValidationService,
-    swaggerService,
-    graphqlService,
+    eventEmitter,
   });
   const needsPermissionCheck =
     ['batch_create', 'batch_update', 'batch_delete'].includes(args.operation);

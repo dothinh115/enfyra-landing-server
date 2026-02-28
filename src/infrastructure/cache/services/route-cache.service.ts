@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleInit, OnApplicationBootstrap } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { QueryBuilderService } from '../../query-builder/query-builder.service';
 import { RedisPubSubService } from './redis-pubsub.service';
 import { CacheService } from './cache.service';
@@ -11,6 +12,7 @@ import {
 } from '../../../shared/utils/constant';
 import { EnfyraRouteEngine } from '../../../shared/utils/enfyra-route-engine';
 import { transformCode } from '../../handler-executor/code-transformer';
+import { CACHE_EVENTS, CACHE_IDENTIFIERS, shouldReloadCache } from '../../../shared/utils/cache-events.constants';
 @Injectable()
 export class RouteCacheService implements OnModuleInit, OnApplicationBootstrap {
   private readonly logger = new Logger(RouteCacheService.name);
@@ -68,6 +70,20 @@ export class RouteCacheService implements OnModuleInit, OnApplicationBootstrap {
       this.messageHandler
     );
   }
+
+  /**
+   * Listen for cache invalidation events.
+   * When a table that affects routes is modified, reload the cache.
+   * The reload() method handles Redis Pub/Sub to sync other instances.
+   */
+  @OnEvent(CACHE_EVENTS.INVALIDATE)
+  async handleCacheInvalidation(payload: { tableName: string; action: string }) {
+    if (shouldReloadCache(payload.tableName, CACHE_IDENTIFIERS.ROUTE)) {
+      this.logger.log(`Cache invalidation event received for table: ${payload.tableName}`);
+      await this.reload();
+    }
+  }
+
   async getRoutes(): Promise<any[]> {
     if (!this.cacheLoaded) {
       await this.reload();
@@ -141,9 +157,9 @@ export class RouteCacheService implements OnModuleInit, OnApplicationBootstrap {
         'routePermissions.*',
         'routePermissions.role.*',
         'preHook.*',
-        'preHook.methods.*',
+        'preHook.methods.method',
         'postHook.*',
-        'postHook.methods.*',
+        'postHook.methods.method',
         'publishedMethods.*',
         'targetTables.*',
       ],
@@ -163,7 +179,7 @@ export class RouteCacheService implements OnModuleInit, OnApplicationBootstrap {
           }
         ],
       },
-      fields: ['*', 'methods.*'],
+      fields: ['*', 'methods.method'],
       sort: ['priority'],
     });
     const globalPreHooks = globalPreHooksResult.data;
@@ -179,7 +195,7 @@ export class RouteCacheService implements OnModuleInit, OnApplicationBootstrap {
           }
         ],
       },
-      fields: ['*', 'methods.*'],
+      fields: ['*', 'methods.method'],
       sort: ['priority'],
     });
     const globalPostHooks = globalPostHooksResult.data;

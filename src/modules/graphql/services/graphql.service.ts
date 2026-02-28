@@ -2,9 +2,11 @@ import { makeExecutableSchema } from '@graphql-tools/schema';
 import { GraphQLSchema } from 'graphql';
 import { createYoga } from 'graphql-yoga';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { MetadataCacheService } from '../../../infrastructure/cache/services/metadata-cache.service';
 import { DynamicResolver } from '../resolvers/dynamic.resolver';
 import { generateGraphQLTypeDefsFromTables } from '../utils/generate-type-defs';
+import { CACHE_EVENTS, CACHE_IDENTIFIERS, shouldReloadCache } from '../../../shared/utils/cache-events.constants';
 
 @Injectable()
 export class GraphqlService implements OnApplicationBootstrap {
@@ -22,6 +24,14 @@ export class GraphqlService implements OnApplicationBootstrap {
       this.logger.log('GraphQL schema initialized successfully');
     } catch (error) {
       this.logger.error('Failed to initialize GraphQL schema:', error.message);
+    }
+  }
+
+  @OnEvent(CACHE_EVENTS.INVALIDATE)
+  async handleCacheInvalidation(payload: { tableName: string; action: string }) {
+    if (shouldReloadCache(payload.tableName, CACHE_IDENTIFIERS.GRAPHQL)) {
+      this.logger.log(`Cache invalidation event received for table: ${payload.tableName}`);
+      await this.reloadSchema();
     }
   }
 
