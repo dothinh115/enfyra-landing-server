@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleInit, OnApplicationBootstrap } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { QueryBuilderService } from '../../query-builder/query-builder.service';
 import { RedisPubSubService } from './redis-pubsub.service';
 import { CacheService } from './cache.service';
@@ -9,6 +10,7 @@ import {
   WEBSOCKET_RELOAD_LOCK_KEY,
   REDIS_TTL,
 } from '../../../shared/utils/constant';
+import { CACHE_EVENTS, CACHE_IDENTIFIERS, shouldReloadCache } from '../../../shared/utils/cache-events.constants';
 
 interface WebSocketEvent {
   id: number | string;
@@ -85,6 +87,14 @@ export class WebsocketCacheService implements OnModuleInit, OnApplicationBootstr
       WEBSOCKET_CACHE_SYNC_EVENT_KEY,
       this.messageHandler
     );
+  }
+
+  @OnEvent(CACHE_EVENTS.INVALIDATE)
+  async handleCacheInvalidation(payload: { tableName: string; action: string }) {
+    if (shouldReloadCache(payload.tableName, CACHE_IDENTIFIERS.WEBSOCKET)) {
+      this.logger.log(`Cache invalidation event received for table: ${payload.tableName}`);
+      await this.reload();
+    }
   }
 
   async getGateways(): Promise<WebSocketGateway[]> {

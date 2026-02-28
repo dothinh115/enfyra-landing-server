@@ -89,11 +89,7 @@ export class DynamicInterceptor<T> implements NestInterceptor<T, any> {
                 req.routeData.context,
                 postHookTimeout,
               );
-              if (result !== undefined) {
-                data = result;
-              } else {
-                data = req.routeData.context.$data;
-              }
+              data = result !== undefined ? result : req.routeData.context.$data;
             } catch (error) {
               throw error;
             }

@@ -1,97 +1,66 @@
 import { BadRequestException } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { QueryBuilderService } from '../../../infrastructure/query-builder/query-builder.service';
 import { TableHandlerService } from '../../table-management/services/table-handler.service';
 import { QueryEngine } from '../../../infrastructure/query-engine/services/query-engine.service';
-import { RouteCacheService } from '../../../infrastructure/cache/services/route-cache.service';
-import { StorageConfigCacheService } from '../../../infrastructure/cache/services/storage-config-cache.service';
-import { AiConfigCacheService } from '../../../infrastructure/cache/services/ai-config-cache.service';
 import { SystemProtectionService } from '../services/system-protection.service';
 import { TableValidationService } from '../services/table-validation.service';
 import { TDynamicContext } from '../../../shared/interfaces/dynamic-context.interface';
-import { BootstrapScriptService } from '../../../core/bootstrap/services/bootstrap-script.service';
-import { RedisPubSubService } from '../../../infrastructure/cache/services/redis-pubsub.service';
 import { MetadataCacheService } from '../../../infrastructure/cache/services/metadata-cache.service';
-import { BOOTSTRAP_SCRIPT_RELOAD_EVENT_KEY } from '../../../shared/utils/constant';
-import { GraphqlService } from 'src/modules/graphql/services/graphql.service';
-import { SwaggerService } from 'src/infrastructure/swagger/services/swagger.service';
-import { WebsocketCacheService } from 'src/infrastructure/cache/services/websocket-cache.service';
+import { CACHE_EVENTS } from '../../../shared/utils/cache-events.constants';
+
 export class DynamicRepository {
   public context: TDynamicContext;
   private tableName: string;
   private queryEngine: QueryEngine;
   private queryBuilder: QueryBuilderService;
   private tableHandlerService: TableHandlerService;
-  private routeCacheService: RouteCacheService;
-  private storageConfigCacheService?: StorageConfigCacheService;
-  private aiConfigCacheService?: AiConfigCacheService;
-  private websocketCacheService?: WebsocketCacheService;
   private systemProtectionService: SystemProtectionService;
   private tableValidationService: TableValidationService;
-  private bootstrapScriptService?: BootstrapScriptService;
-  private redisPubSubService?: RedisPubSubService;
   private metadataCacheService: MetadataCacheService;
-  private graphqlService: GraphqlService;
-  private swaggerService: SwaggerService;
+  private eventEmitter: EventEmitter2;
   private tableMetadata: any;
+
   constructor({
     context,
     tableName,
     queryEngine,
     queryBuilder,
     tableHandlerService,
-    routeCacheService,
-    storageConfigCacheService,
-    aiConfigCacheService,
-    websocketCacheService,
     systemProtectionService,
     tableValidationService,
-    bootstrapScriptService,
-    redisPubSubService,
     metadataCacheService,
-    swaggerService,
-    graphqlService
+    eventEmitter,
   }: {
     context: TDynamicContext;
     tableName: string;
     queryEngine: QueryEngine;
     queryBuilder: QueryBuilderService;
     tableHandlerService: TableHandlerService;
-    routeCacheService: RouteCacheService;
-    storageConfigCacheService?: StorageConfigCacheService;
-    aiConfigCacheService?: AiConfigCacheService;
-    websocketCacheService?: WebsocketCacheService;
     systemProtectionService: SystemProtectionService;
     tableValidationService: TableValidationService;
-    bootstrapScriptService?: BootstrapScriptService;
-    redisPubSubService?: RedisPubSubService;
     metadataCacheService: MetadataCacheService;
-    swaggerService?: SwaggerService;
-    graphqlService?: GraphqlService;
+    eventEmitter: EventEmitter2;
   }) {
     this.context = context;
     this.tableName = tableName;
     this.queryEngine = queryEngine;
     this.queryBuilder = queryBuilder;
     this.tableHandlerService = tableHandlerService;
-    this.routeCacheService = routeCacheService;
-    this.storageConfigCacheService = storageConfigCacheService;
-    this.aiConfigCacheService = aiConfigCacheService;
-    this.websocketCacheService = websocketCacheService;
     this.systemProtectionService = systemProtectionService;
     this.tableValidationService = tableValidationService;
-    this.bootstrapScriptService = bootstrapScriptService;
-    this.redisPubSubService = redisPubSubService;
     this.metadataCacheService = metadataCacheService;
-    this.swaggerService = swaggerService;
-    this.graphqlService = graphqlService;
+    this.eventEmitter = eventEmitter;
   }
+
   async init() {
     this.tableMetadata = await this.metadataCacheService.lookupTableByName(this.tableName);
   }
+
   private getIdField(): string {
     return this.queryBuilder.isMongoDb() ? '_id' : 'id';
   }
+
   async find(opt: { where?: any; fields?: string | string[]; limit?: number; sort?: string; meta?: string | string[] }) {
     const debugMode = this.context.$query?.debugMode === 'true' || this.context.$query?.debugMode === true;
     return await this.queryEngine.find({
@@ -107,6 +76,7 @@ export class DynamicRepository {
       debugMode: debugMode,
     });
   }
+
   async create(opt: { data: any; fields?: string | string[] }) {
     try {
       const { data: body, fields } = opt;
@@ -162,6 +132,7 @@ export class DynamicRepository {
       throw new BadRequestException(error.message || 'Document failed validation');
     }
   }
+
   async update(opt: { id: string | number; data: any; fields?: string | string[] }) {
     try {
       const { id, data: body, fields } = opt;
@@ -194,6 +165,7 @@ export class DynamicRepository {
       throw new BadRequestException(error.message);
     }
   }
+
   async delete(opt: { id: string | number }) {
     try {
       const { id } = opt;
@@ -225,56 +197,18 @@ export class DynamicRepository {
       throw new BadRequestException(error.message);
     }
   }
+
+  /**
+   * Emit cache invalidation event.
+   * Each cache service listens to this event and decides whether to reload
+   * based on the table name. The cache services handle Redis Pub/Sub
+   * to synchronize across multiple instances.
+   */
   private async reload() {
-    if (
-      [
-        'table_definition',
-        'column_definition',
-        'relation_definition',
-      ].includes(this.tableName)
-    ) {
-      await this.metadataCacheService.reload();
-    }
-    if (
-      [
-        'route_definition',
-        'pre_hook_definition',
-        'post_hook_definition',
-        'route_handler_definition',
-        'route_permission_definition',
-        'role_definition',
-        'table_definition',
-        'method_definition',
-      ].includes(this.tableName)
-    ) {
-      await this.routeCacheService.reload();
-      await this.graphqlService?.reloadSchema();
-      await this.swaggerService?.reloadSwagger();
-    }
-    if (this.tableName === 'bootstrap_script_definition' && this.bootstrapScriptService) {
-      if (this.redisPubSubService) {
-        await this.redisPubSubService.publish(BOOTSTRAP_SCRIPT_RELOAD_EVENT_KEY, {
-          timestamp: Date.now(),
-          tableName: this.tableName,
-          action: 'reload',
-          message: 'Bootstrap script definition changed - triggering reload'
-        });
-      }
-      await this.bootstrapScriptService.reloadBootstrapScripts();
-    }
-    if (this.tableName === 'storage_config_definition' && this.storageConfigCacheService) {
-      await this.storageConfigCacheService.reload();
-    }
-    if (this.tableName === 'ai_config_definition' && this.aiConfigCacheService) {
-      await this.aiConfigCacheService.reload();
-    }
-    if (
-      [
-        'websocket_definition',
-        'websocket_event_definition',
-      ].includes(this.tableName) && this.websocketCacheService
-    ) {
-      await this.websocketCacheService.reload();
-    }
+    this.eventEmitter.emit(CACHE_EVENTS.INVALIDATE, {
+      tableName: this.tableName,
+      action: 'reload',
+      timestamp: Date.now(),
+    });
   }
 }

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { QueryBuilderService } from '../../../infrastructure/query-builder/query-builder.service';
 import { CacheService } from '../../../infrastructure/cache/services/cache.service';
 import { InstanceService } from '../../../shared/services/instance.service';
@@ -7,14 +8,9 @@ import { SESSION_CLEANUP_LOCK_KEY, REDIS_TTL } from '../../../shared/utils/const
 import { DynamicRepository } from '../../../modules/dynamic-api/repositories/dynamic.repository';
 import { QueryEngine } from '../../../infrastructure/query-engine/services/query-engine.service';
 import { TableHandlerService } from '../../../modules/table-management/services/table-handler.service';
-import { RouteCacheService } from '../../../infrastructure/cache/services/route-cache.service';
-import { StorageConfigCacheService } from '../../../infrastructure/cache/services/storage-config-cache.service';
-import { AiConfigCacheService } from '../../../infrastructure/cache/services/ai-config-cache.service';
 import { MetadataCacheService } from '../../../infrastructure/cache/services/metadata-cache.service';
 import { SystemProtectionService } from '../../../modules/dynamic-api/services/system-protection.service';
 import { TableValidationService } from '../../../modules/dynamic-api/services/table-validation.service';
-import { SwaggerService } from '../../../infrastructure/swagger/services/swagger.service';
-import { GraphqlService } from '../../../modules/graphql/services/graphql.service';
 import { TDynamicContext } from '../../../shared/interfaces/dynamic-context.interface';
 
 @Injectable()
@@ -27,14 +23,10 @@ export class SessionCleanupService {
     private readonly instanceService: InstanceService,
     private readonly queryEngine: QueryEngine,
     private readonly tableHandlerService: TableHandlerService,
-    private readonly routeCacheService: RouteCacheService,
-    private readonly storageConfigCacheService: StorageConfigCacheService,
-    private readonly aiConfigCacheService: AiConfigCacheService,
     private readonly metadataCacheService: MetadataCacheService,
     private readonly systemProtectionService: SystemProtectionService,
     private readonly tableValidationService: TableValidationService,
-    private readonly swaggerService: SwaggerService,
-    private readonly graphqlService: GraphqlService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
@@ -80,16 +72,10 @@ export class SessionCleanupService {
           queryBuilder: this.queryBuilder,
           queryEngine: this.queryEngine,
           tableHandlerService: this.tableHandlerService,
-          routeCacheService: this.routeCacheService,
-          storageConfigCacheService: this.storageConfigCacheService,
-          aiConfigCacheService: this.aiConfigCacheService,
           metadataCacheService: this.metadataCacheService,
           systemProtectionService: this.systemProtectionService,
           tableValidationService: this.tableValidationService,
-          bootstrapScriptService: undefined,
-          redisPubSubService: undefined,
-          swaggerService: this.swaggerService,
-          graphqlService: this.graphqlService,
+          eventEmitter: this.eventEmitter,
         });
 
         await repo.init();

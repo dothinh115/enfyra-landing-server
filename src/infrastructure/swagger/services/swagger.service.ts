@@ -1,12 +1,15 @@
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, OnApplicationBootstrap, Logger } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { OpenAPIObject } from '@nestjs/swagger';
 import { RouteCacheService } from '../../cache/services/route-cache.service';
 import { QueryBuilderService } from '../../../infrastructure/query-builder/query-builder.service';
 import { generateErrorSchema } from '../utils/openapi-schema-generator';
 import { generatePathsFromRoutes, generateCommonResponses } from '../utils/openapi-path-generator';
 import { HttpAdapterHost } from '@nestjs/core';
+import { CACHE_EVENTS, CACHE_IDENTIFIERS, shouldReloadCache } from '../../../shared/utils/cache-events.constants';
 @Injectable()
 export class SwaggerService implements OnApplicationBootstrap {
+  private readonly logger = new Logger(SwaggerService.name);
   private currentSpec: OpenAPIObject;
   private methodsCache: string[] = [];
   constructor(
@@ -17,6 +20,15 @@ export class SwaggerService implements OnApplicationBootstrap {
   async onApplicationBootstrap() {
     await this.reloadSwagger();
   }
+
+  @OnEvent(CACHE_EVENTS.INVALIDATE)
+  async handleCacheInvalidation(payload: { tableName: string; action: string }) {
+    if (shouldReloadCache(payload.tableName, CACHE_IDENTIFIERS.SWAGGER)) {
+      this.logger.log(`Cache invalidation event received for table: ${payload.tableName}`);
+      await this.reloadSwagger();
+    }
+  }
+
   async reloadSwagger() {
     try {
       this.currentSpec = await this.generateOpenApiSpec();

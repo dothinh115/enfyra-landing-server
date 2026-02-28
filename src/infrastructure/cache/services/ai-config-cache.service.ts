@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleInit, OnApplicationBootstrap } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { QueryBuilderService } from '../../query-builder/query-builder.service';
 import { RedisPubSubService } from './redis-pubsub.service';
 import { CacheService } from './cache.service';
@@ -8,6 +9,7 @@ import {
   AI_CONFIG_RELOAD_LOCK_KEY,
   REDIS_TTL,
 } from '../../../shared/utils/constant';
+import { CACHE_EVENTS, CACHE_IDENTIFIERS, shouldReloadCache } from '../../../shared/utils/cache-events.constants';
 export interface AiConfig {
   id: number;
   provider: string;
@@ -79,6 +81,15 @@ export class AiConfigCacheService implements OnModuleInit, OnApplicationBootstra
       this.messageHandler
     );
   }
+
+  @OnEvent(CACHE_EVENTS.INVALIDATE)
+  async handleCacheInvalidation(payload: { tableName: string; action: string }) {
+    if (shouldReloadCache(payload.tableName, CACHE_IDENTIFIERS.AI_CONFIG)) {
+      this.logger.log(`Cache invalidation event received for table: ${payload.tableName}`);
+      await this.reload();
+    }
+  }
+
   private async loadConfigsFromDb(): Promise<AiConfig[]> {
     const result = await this.queryBuilder.select({
       tableName: 'ai_config_definition',
