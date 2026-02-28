@@ -1,16 +1,12 @@
 import { StateGraph, Annotation, END, START } from '@langchain/langgraph';
 import { Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MetadataCacheService } from '../../../infrastructure/cache/services/metadata-cache.service';
 import { QueryBuilderService } from '../../../infrastructure/query-builder/query-builder.service';
 import { TableHandlerService } from '../../table-management/services/table-handler.service';
 import { QueryEngine } from '../../../infrastructure/query-engine/services/query-engine.service';
-import { RouteCacheService } from '../../../infrastructure/cache/services/route-cache.service';
-import { StorageConfigCacheService } from '../../../infrastructure/cache/services/storage-config-cache.service';
-import { AiConfigCacheService } from '../../../infrastructure/cache/services/ai-config-cache.service';
 import { SystemProtectionService } from '../../dynamic-api/services/system-protection.service';
 import { TableValidationService } from '../../dynamic-api/services/table-validation.service';
-import { SwaggerService } from '../../../infrastructure/swagger/services/swagger.service';
-import { GraphqlService } from '../../graphql/services/graphql.service';
 import { TDynamicContext } from '../../../shared/interfaces/dynamic-context.interface';
 import { getForeignKeyColumnName } from '../../../infrastructure/knex/utils/naming-helpers';
 import { collectRelationValidationErrors, collectTableDataValidationErrors, createTableDefinitionRepository } from './table-workflow.helper';
@@ -78,13 +74,9 @@ export class TableCreationWorkflow {
     private readonly queryBuilder: QueryBuilderService,
     private readonly tableHandlerService: TableHandlerService,
     private readonly queryEngine: QueryEngine,
-    private readonly routeCacheService: RouteCacheService,
-    private readonly storageConfigCacheService: StorageConfigCacheService,
-    private readonly aiConfigCacheService: AiConfigCacheService,
     private readonly systemProtectionService: SystemProtectionService,
     private readonly tableValidationService: TableValidationService,
-    private readonly swaggerService: SwaggerService,
-    private readonly graphqlService: GraphqlService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.graph = this.buildGraph();
   }
@@ -130,13 +122,9 @@ export class TableCreationWorkflow {
         queryBuilder: this.queryBuilder,
         tableHandlerService: this.tableHandlerService,
         queryEngine: this.queryEngine,
-        routeCacheService: this.routeCacheService,
-        storageConfigCacheService: this.storageConfigCacheService,
-        aiConfigCacheService: this.aiConfigCacheService,
         systemProtectionService: this.systemProtectionService,
         tableValidationService: this.tableValidationService,
-        swaggerService: this.swaggerService,
-        graphqlService: this.graphqlService,
+        eventEmitter: this.eventEmitter,
       }, state.context);
 
       await repo.init();
@@ -225,13 +213,9 @@ export class TableCreationWorkflow {
           queryBuilder: this.queryBuilder,
           tableHandlerService: this.tableHandlerService,
           queryEngine: this.queryEngine,
-          routeCacheService: this.routeCacheService,
-          storageConfigCacheService: this.storageConfigCacheService,
-          aiConfigCacheService: this.aiConfigCacheService,
           systemProtectionService: this.systemProtectionService,
           tableValidationService: this.tableValidationService,
-          swaggerService: this.swaggerService,
-          graphqlService: this.graphqlService,
+          eventEmitter: this.eventEmitter,
         },
         state.context,
       );
@@ -350,13 +334,9 @@ export class TableCreationWorkflow {
           queryBuilder: this.queryBuilder,
           tableHandlerService: this.tableHandlerService,
           queryEngine: this.queryEngine,
-          routeCacheService: this.routeCacheService,
-          storageConfigCacheService: this.storageConfigCacheService,
-          aiConfigCacheService: this.aiConfigCacheService,
           systemProtectionService: this.systemProtectionService,
           tableValidationService: this.tableValidationService,
-          swaggerService: this.swaggerService,
-          graphqlService: this.graphqlService,
+          eventEmitter: this.eventEmitter,
         },
         state.context,
       );
@@ -450,13 +430,9 @@ export class TableCreationWorkflow {
           queryBuilder: this.queryBuilder,
           tableHandlerService: this.tableHandlerService,
           queryEngine: this.queryEngine,
-          routeCacheService: this.routeCacheService,
-          storageConfigCacheService: this.storageConfigCacheService,
-          aiConfigCacheService: this.aiConfigCacheService,
           systemProtectionService: this.systemProtectionService,
           tableValidationService: this.tableValidationService,
-          swaggerService: this.swaggerService,
-          graphqlService: this.graphqlService,
+          eventEmitter: this.eventEmitter,
         },
         state.context,
       );

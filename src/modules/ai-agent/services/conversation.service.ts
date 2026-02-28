@@ -1,16 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DynamicRepository } from '../../dynamic-api/repositories/dynamic.repository';
 import { QueryBuilderService } from '../../../infrastructure/query-builder/query-builder.service';
 import { TableHandlerService } from '../../table-management/services/table-handler.service';
 import { QueryEngine } from '../../../infrastructure/query-engine/services/query-engine.service';
-import { RouteCacheService } from '../../../infrastructure/cache/services/route-cache.service';
-import { StorageConfigCacheService } from '../../../infrastructure/cache/services/storage-config-cache.service';
 import { MetadataCacheService } from '../../../infrastructure/cache/services/metadata-cache.service';
-import { AiConfigCacheService } from '../../../infrastructure/cache/services/ai-config-cache.service';
 import { SystemProtectionService } from '../../dynamic-api/services/system-protection.service';
 import { TableValidationService } from '../../dynamic-api/services/table-validation.service';
-import { SwaggerService } from '../../../infrastructure/swagger/services/swagger.service';
-import { GraphqlService } from '../../graphql/services/graphql.service';
 import { TDynamicContext } from '../../../shared/interfaces/dynamic-context.interface';
 import { IConversation, IConversationCreate, IConversationUpdate } from '../interfaces/conversation.interface';
 import { IMessage, IMessageCreate } from '../interfaces/message.interface';
@@ -21,14 +17,10 @@ export class ConversationService {
     private readonly queryBuilder: QueryBuilderService,
     private readonly tableHandlerService: TableHandlerService,
     private readonly queryEngine: QueryEngine,
-    private readonly routeCacheService: RouteCacheService,
-    private readonly storageConfigCacheService: StorageConfigCacheService,
-    private readonly aiConfigCacheService: AiConfigCacheService,
     private readonly metadataCacheService: MetadataCacheService,
     private readonly systemProtectionService: SystemProtectionService,
     private readonly tableValidationService: TableValidationService,
-    private readonly swaggerService: SwaggerService,
-    private readonly graphqlService: GraphqlService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
   private createContext(userId?: string | number): TDynamicContext {
     return {
@@ -82,16 +74,10 @@ export class ConversationService {
       queryBuilder: this.queryBuilder,
       tableHandlerService: this.tableHandlerService,
       queryEngine: this.queryEngine,
-      routeCacheService: this.routeCacheService,
-      storageConfigCacheService: this.storageConfigCacheService,
-      aiConfigCacheService: this.aiConfigCacheService,
       metadataCacheService: this.metadataCacheService,
       systemProtectionService: this.systemProtectionService,
       tableValidationService: this.tableValidationService,
-      bootstrapScriptService: undefined,
-      redisPubSubService: undefined,
-      swaggerService: this.swaggerService,
-      graphqlService: this.graphqlService,
+      eventEmitter: this.eventEmitter,
     });
     await repo.init();
     return repo;

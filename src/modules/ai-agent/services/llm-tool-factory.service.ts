@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { z } from 'zod';
 import { ToolExecutor } from '../utils/tool-executor.helper';
 import { MetadataCacheService } from '../../../infrastructure/cache/services/metadata-cache.service';
@@ -6,12 +7,8 @@ import { QueryBuilderService } from '../../../infrastructure/query-builder/query
 import { TableHandlerService } from '../../table-management/services/table-handler.service';
 import { QueryEngine } from '../../../infrastructure/query-engine/services/query-engine.service';
 import { RouteCacheService } from '../../../infrastructure/cache/services/route-cache.service';
-import { StorageConfigCacheService } from '../../../infrastructure/cache/services/storage-config-cache.service';
-import { AiConfigCacheService } from '../../../infrastructure/cache/services/ai-config-cache.service';
 import { SystemProtectionService } from '../../dynamic-api/services/system-protection.service';
 import { TableValidationService } from '../../dynamic-api/services/table-validation.service';
-import { SwaggerService } from '../../../infrastructure/swagger/services/swagger.service';
-import { GraphqlService } from '../../graphql/services/graphql.service';
 import { ConversationService } from './conversation.service';
 
 @Injectable()
@@ -24,13 +21,10 @@ export class LLMToolFactoryService {
     private readonly tableHandlerService: TableHandlerService,
     private readonly queryEngine: QueryEngine,
     private readonly routeCacheService: RouteCacheService,
-    private readonly storageConfigCacheService: StorageConfigCacheService,
-    private readonly aiConfigCacheService: AiConfigCacheService,
     private readonly systemProtectionService: SystemProtectionService,
     private readonly tableValidationService: TableValidationService,
-    private readonly swaggerService: SwaggerService,
-    private readonly graphqlService: GraphqlService,
     private readonly conversationService: ConversationService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     this.toolExecutor = new ToolExecutor(
       this.metadataCacheService,
@@ -38,13 +32,10 @@ export class LLMToolFactoryService {
       this.tableHandlerService,
       this.queryEngine,
       this.routeCacheService,
-      this.storageConfigCacheService,
-      this.aiConfigCacheService,
       this.systemProtectionService,
       this.tableValidationService,
-      this.swaggerService,
-      this.graphqlService,
       this.conversationService,
+      this.eventEmitter,
     );
   }
 

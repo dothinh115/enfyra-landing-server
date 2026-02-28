@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { OnEvent, EventEmitter2 } from '@nestjs/event-emitter';
 import { QueryBuilderService } from '../../../infrastructure/query-builder/query-builder.service';
 import { MetadataCacheService } from '../../../infrastructure/cache/services/metadata-cache.service';
 import { HandlerExecutorService } from '../../../infrastructure/handler-executor/services/handler-executor.service';
@@ -6,22 +7,22 @@ import { CacheService } from '../../../infrastructure/cache/services/cache.servi
 import { DynamicRepository } from '../../../modules/dynamic-api/repositories/dynamic.repository';
 import { TableHandlerService } from '../../../modules/table-management/services/table-handler.service';
 import { QueryEngine } from '../../../infrastructure/query-engine/services/query-engine.service';
-import { RouteCacheService } from '../../../infrastructure/cache/services/route-cache.service';
-import { StorageConfigCacheService } from '../../../infrastructure/cache/services/storage-config-cache.service';
 import { SystemProtectionService } from '../../../modules/dynamic-api/services/system-protection.service';
 import { TableValidationService } from '../../../modules/dynamic-api/services/table-validation.service';
 import { TDynamicContext } from '../../../shared/interfaces/dynamic-context.interface';
 import { ScriptErrorFactory } from '../../../shared/utils/script-error-factory';
-import { RedisPubSubService } from '../../../infrastructure/cache/services/redis-pubsub.service';
 import { InstanceService } from '../../../shared/services/instance.service';
 import {
   BOOTSTRAP_SCRIPT_EXECUTION_LOCK_KEY,
   REDIS_TTL
 } from '../../../shared/utils/constant';
 import { transformCode } from '../../../infrastructure/handler-executor/code-transformer';
+import { CACHE_EVENTS, CACHE_IDENTIFIERS, shouldReloadCache } from '../../../shared/utils/cache-events.constants';
+
 @Injectable()
 export class BootstrapScriptService implements OnApplicationBootstrap {
   private readonly logger = new Logger(BootstrapScriptService.name);
+
   constructor(
     private queryBuilder: QueryBuilderService,
     private metadataCacheService: MetadataCacheService,
@@ -29,19 +30,27 @@ export class BootstrapScriptService implements OnApplicationBootstrap {
     private cacheService: CacheService,
     private tableHandlerService: TableHandlerService,
     private queryEngine: QueryEngine,
-    private routeCacheService: RouteCacheService,
-    private storageConfigCacheService: StorageConfigCacheService,
     private systemProtectionService: SystemProtectionService,
     private tableValidationService: TableValidationService,
-    private redisPubSubService: RedisPubSubService,
     private instanceService: InstanceService,
+    private eventEmitter: EventEmitter2,
   ) {}
+
   async onApplicationBootstrap() {
     this.logger.log('Starting BootstrapScriptService...');
     await this.waitForTableExists();
     await this.executeBootstrapScripts();
     this.logger.log('BootstrapScriptService completed successfully');
   }
+
+  @OnEvent(CACHE_EVENTS.INVALIDATE)
+  async handleCacheInvalidation(payload: { tableName: string; action: string }) {
+    if (shouldReloadCache(payload.tableName, CACHE_IDENTIFIERS.BOOTSTRAP)) {
+      this.logger.log(`Cache invalidation event received for table: ${payload.tableName}`);
+      await this.reloadBootstrapScripts();
+    }
+  }
+
   async reloadBootstrapScripts() {
     this.logger.log('Reloading BootstrapScriptService...');
     await this.withBootstrapLock(async () => {
@@ -51,6 +60,7 @@ export class BootstrapScriptService implements OnApplicationBootstrap {
       this.logger.log('BootstrapScriptService reload completed successfully');
     }, 'reload');
   }
+
   private async withBootstrapLock<R>(
     operation: () => Promise<R>,
     context: 'startup' | 'reload'
@@ -74,6 +84,7 @@ export class BootstrapScriptService implements OnApplicationBootstrap {
       this.logger.log(`Bootstrap ${context} lock released (${lockValue})`);
     }
   }
+
   private async waitForTableExists(maxRetries = 10, delayMs = 500): Promise<void> {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -102,11 +113,13 @@ export class BootstrapScriptService implements OnApplicationBootstrap {
       }
     }
   }
+
   private async executeBootstrapScripts() {
     await this.withBootstrapLock(async () => {
       await this.executeBootstrapScriptsWithoutLock();
     }, 'startup');
   }
+
   private async executeBootstrapScriptsWithoutLock() {
     const result = await this.queryBuilder.select({
       tableName: 'bootstrap_script_definition',
@@ -135,6 +148,7 @@ export class BootstrapScriptService implements OnApplicationBootstrap {
     }
     this.logger.log(`Bootstrap scripts execution completed`);
   }
+
   private async executeScript(script: any) {
     const tablesResult = await this.queryBuilder.select({ tableName: 'table_definition' });
     const tableDefinitions = tablesResult.data;
@@ -148,12 +162,9 @@ export class BootstrapScriptService implements OnApplicationBootstrap {
           queryBuilder: this.queryBuilder,
           metadataCacheService: this.metadataCacheService,
           queryEngine: this.queryEngine,
-          routeCacheService: this.routeCacheService,
-          storageConfigCacheService: this.storageConfigCacheService,
           systemProtectionService: this.systemProtectionService,
           tableValidationService: this.tableValidationService,
-          bootstrapScriptService: this,
-          redisPubSubService: this.redisPubSubService,
+          eventEmitter: this.eventEmitter,
         });
         await dynamicRepo.init();
         this.logger.debug(`📦 Created dynamic repository for table: ${tableName}`);
@@ -188,6 +199,7 @@ export class BootstrapScriptService implements OnApplicationBootstrap {
     this.logger.log(`Script execution result:`, executionResult);
     return executionResult;
   }
+
   async reloadBootstrapScriptsWithoutClear() {
     await this.executeBootstrapScriptsWithoutLock();
   }

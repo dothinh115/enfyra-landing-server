@@ -184,13 +184,28 @@ export class FileController {
     }
 
     const updateData: any = {};
-    
+
     if (body.folder) {
       updateData.folder = typeof body.folder === 'object' ? body.folder : { id: body.folder };
     }
-    
-    if (body.storageConfig) {
-      updateData.storageConfig = this.fileManagementService.createIdReference(body.storageConfig);
+
+    if (body.storageConfig !== undefined && body.storageConfig !== null) {
+      const storageConfigId = typeof body.storageConfig === 'object' ? body.storageConfig.id : body.storageConfig;
+      if (storageConfigId) {
+        updateData.storageConfig = this.fileManagementService.createIdReference(storageConfigId);
+      }
+    }
+
+    if (body.isPublished !== undefined) {
+      updateData.isPublished = body.isPublished;
+    }
+
+    if (body.description !== undefined) {
+      updateData.description = body.description;
+    }
+
+    if (body.status !== undefined) {
+      updateData.status = body.status;
     }
 
     if (Object.keys(updateData).length === 0) {
