@@ -69,19 +69,23 @@ jobs:
             echo "✅ No changes to push to origin/main."
           fi
 
-      - name: Install sshpass
+      - name: Setup SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
-          sudo apt-get update
-          sudo apt-get install -y sshpass
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
 
-      - name: Deploy to VPS via sshpass
+      - name: Deploy to VPS via SSH
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PASSWORD: ${{ secrets.VPS_PASSWORD }}
         run: |
           EVENT_NAME="${{ github.event_name }}"
-          sshpass -p "$VPS_PASSWORD" ssh -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST "bash -s \"$EVENT_NAME\"" <<'ENDSSH'
+          ssh $VPS_USER@$VPS_HOST "bash -s \"$EVENT_NAME\"" <<'ENDSSH'
             # Set project variables
             export PROJECT_NAME="landing-server"
             export APP_DIR="/apps/landing-server"
